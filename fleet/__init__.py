@@ -28,6 +28,18 @@ class FleetClient:
     def get_version(self):
         return self.provider.client_version()
 
+    def deploy(self, template_name, template, num_copies=1,
+               node_substitutions=[]):
+        """
+        :param template_name: `str`
+        :param template:
+        :param num_copies:
+        :param node_substitutions:
+        :return:
+        """
+
+        pass
+
 if __name__ == "__main__":
     client = get_client()
     print(client.get_version())

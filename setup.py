@@ -15,5 +15,5 @@ setup(
     url='https://github.com/sukrit007/fleet-sdk',
     license = 'MIT',
     platforms = 'Posix; MacOS X;',
-    packages=['fleet']
+    packages=['scheduler']
 )

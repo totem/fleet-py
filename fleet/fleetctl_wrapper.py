@@ -28,6 +28,11 @@ class Provider:
             raise RuntimeError("Fleetctl version:{} is not supported"
                                .format(version))
 
+    def start(self, path, service_files=[]):
+        start_cmd = [self.fleetctl_cmd, 'start'] + service_files
+        subprocess.check_output(start_cmd, timeout=self.timeout) \
+            .decode(encoding='UTF-8').strip()
+        pass
 
 if __name__ == "__main__":
     pass

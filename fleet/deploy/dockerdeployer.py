@@ -97,7 +97,7 @@ class Deployment:
         for unit in range(1, self.nodes+1):
             template_args['unit'] = unit
             unit_data = template.format(**template_args)
-            service_name = "{}-{}".format(service_name_prefix, unit)
+            service_name = "{}-{}.service".format(service_name_prefix, unit)
             unit_stream = StringIO()
             unit_stream.write(unit_data)
             fleet_provider.deploy(service_name, unit_stream)
@@ -128,18 +128,56 @@ def deploy(fleet_provider, **kwargs):
     deployment.deploy(fleet_provider)
     #Replace
 
+def undeploy(fleet_provider, name, version, nodes):
+    for unit in range(1, nodes+1):
+        app_service = "{}-{}-{}.service".format(name, version, unit)
+        register_service = "{}-announce-{}-{}.service".format(name, version, unit)
+        log_service = "{}-logger-{}-{}.service".format(name, version, unit)
+
+        fleet_provider.destroy(app_service)
+        fleet_provider.destroy(register_service)
+        fleet_provider.destroy(log_service)
+
+def app_status(fleet_provider, name, version, node_num):
+    app_service = "{}-{}-{}.service".format(name, version, node_num)
+    return fleet_provider.status(app_service)
+
+def register_status(fleet_provider, name, version, node_num):
+    register_service = "{}-announce-{}-{}.service".format(
+        name, version, node_num)
+    return fleet_provider.status(register_service)
+
+def logger_status(fleet_provider, name, version, node_num):
+    log_service = "{}-logger-{}-{}.service".format(name, version, node_num)
+    return fleet_provider.status(log_service)
+
+
+
 if __name__ == "__main__":
     provider = fleet_client.get_provider(
         hosts='core@ec2-54-176-123-236.us-west-1.compute.amazonaws.com')
 
-    deploy(provider,
-        image='coreos/apache',
-        name='apache',
-        version='a234wdsa34',
-        use_logger=True,
-        use_register=True,
-        nodes = 3,
-        docker_args='-p :80',
-        app_cmd='/bin/bash -c "echo \\\\"<h1>a234wdsa34</h1>\\\\" \
-            >/var/www/index.html &&\
-            /usr/sbin/apache2ctl -D FOREGROUND"' )
+    # deploy(provider,
+    #     image='coreos/apache',
+    #     name='apache',
+    #     version='a234wdsa34',
+    #     use_logger=True,
+    #     use_register=True,
+    #     nodes = 3,
+    #     docker_args='-p :80',
+    #     app_cmd='/bin/bash -c "echo \\\\"<h1>a234wdsa34</h1>\\\\" \
+    #         >/var/www/index.html &&\
+    #         /usr/sbin/apache2ctl -D FOREGROUND"' )
+
+    print register_status(provider,
+               name='apache',
+               version='a234wdsa34',
+               node_num=1
+               )
+
+    # undeploy(provider,
+    #          name='apache',
+    #          version='a234wdsa34',
+    #          nodes=3
+    # )
+

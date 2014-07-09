@@ -89,7 +89,7 @@ class Provider:
         with self._logger_stream() as stream:
             with self._settings():
                 return run('fleetctl list-units | grep {} | '
-                           'awk "{{print $5}}"'.format(service_name),
+                           'awk \'{{{{print $5}}}}\''.format(service_name),
                             stdout=stream, stderr=stream)
 
 

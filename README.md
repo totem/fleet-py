@@ -1,19 +1,14 @@
-# Fleet Scheduler
+# Fleet Client
 
 Provide a simple to use Python library for 
-[Fleet](https://github.com/coreos/fleet). The scheduler is a direct port of 
-the scheduler from [deis](https://github.com/deis/deis) project. Modifications
-to original library:  
-* Support for Python 3  
-* Can be used as independent library 
-* Ability to customize log templates, register template and job template
+[Fleet](https://github.com/coreos/fleet). Some of the code and idea has been
+taken from the from [deis](https://github.com/deis/deis) project.
 
 ## Development Status
 This library is currently under development.
 
 ## Requirements
-* Python 3.4+
-* fleetctl v0.5.0+ (In future this will not be a mandatory requirement)
+* Python 2.7 with fabric
 
 ### Generating Documentation
 

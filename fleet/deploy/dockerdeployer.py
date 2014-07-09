@@ -7,7 +7,7 @@ import fleet.client as fleet_client
 TEMPLATES = {
     "default_app":"""
 [Unit]
-Description=Application {name}-{version}-{unit}
+Description={name}-{version}-{unit} Application
 
 [Service]
 Restart=always
@@ -27,11 +27,24 @@ X-Conflicts={name}-{version}-*.service
 
 
     "default_logger": """
-    """,
+[Unit]
+Description={name}-{version}-{unit} Logger
+BindsTo={name}-{version}-{unit}.service
+
+[Service]
+Restart=always
+RestartSec=20s
+ExecStartPre=/bin/sh -c "until docker inspect {name}-{version} >/dev/null 2>&1; do sleep 1; done"
+ExecStart=/bin/sh -c "docker logs -f {name}-{version} 2>&1 | logger -p local0.info -t \\"{name} {version} {unit}\\" --udp --server $(etcdctl get /deis/logs/host | cut -d ':' -f1) --port $(etcdctl get /deis/logs/port | cut -d ':' -f2)"
+
+
+[X-Fleet]
+X-ConditionMachineOf={name}-{version}-{unit}.service
+""",
 
     "default_register": """
 [Unit]
-Description=Application {name}-{version}-{unit} Announce
+Description={name}-{version}-{unit} Register
 BindsTo={name}-{version}-{unit}.service
 
 [Service]
@@ -98,10 +111,21 @@ class Deployment:
         self._deploy(fleet_provider, self.register_template,
                      "{}-announce-{}".format(self.name, self.version))
 
+    def deploy_logger(self, fleet_provider):
+        self._deploy(fleet_provider, self.log_template,
+                     "{}-logger-{}".format(self.name, self.version))
+
+    def deploy(self, fleet_provider):
+        self.deploy_app(fleet_provider)
+        if self.register_template:
+            self.deploy_register(fleet_provider)
+        if self.log_template:
+            self.deploy_logger(fleet_provider)
+
 
 def deploy(fleet_provider, **kwargs):
     deployment = Deployment(**kwargs)
-    deployment.deploy_register(fleet_provider)
+    deployment.deploy(fleet_provider)
     #Replace
 
 if __name__ == "__main__":
@@ -112,9 +136,9 @@ if __name__ == "__main__":
         image='coreos/apache',
         name='apache',
         version='a234wdsa34',
-        use_logger=False,
+        use_logger=True,
         use_register=True,
-        nodes = 5,
+        nodes = 3,
         docker_args='-p :80',
         app_cmd='/bin/bash -c "echo \\\\"<h1>a234wdsa34</h1>\\\\" \
             >/var/www/index.html &&\

@@ -1,0 +1,18 @@
+[Unit]
+Description={name}-{version}-{unit} Register
+BindsTo={name}-{version}-{unit}.service
+
+[Service]
+EnvironmentFile=/etc/environment
+Restart=always
+RestartSec=20s
+
+ExecStartPre=/bin/sh -c "until docker inspect -f '{{{{range $i, $e := .HostConfig.PortBindings }}}}{{{{$p := index $e 0}}}}{{{{$p.HostPort}}}}{{{{end}}}}' {name}-{version}-{unit} >/dev/null 2>&1; \
+  do sleep 2; done; \
+  port=$(docker inspect -f '{{{{range $i, $e := .HostConfig.PortBindings }}}}{{{{$p := index $e 0}}}}{{{{$p.HostPort}}}}{{{{end}}}}' {name}-{version}-{unit}); \
+  echo Waiting for $port/tcp...; until netstat -lnt | grep :$port >/dev/null; do sleep 1; done"
+ExecStart=/bin/sh -c "port=$(docker inspect -f '{{{{range $i, $e := .HostConfig.PortBindings }}}}{{{{$p := index $e 0}}}}{{{{$p.HostPort}}}}{{{{end}}}}' {name}-{version}-{unit}); echo Connected to $COREOS_PRIVATE_IPV4:$port/tcp, publishing to etcd...; while netstat -lnt | grep :$port >/dev/null; do etcdctl set /deis/services/{name}-{version}/{name}-{version}-{unit} $COREOS_PRIVATE_IPV4:$port --ttl 60 >/dev/null; sleep 45; done"
+ExecStop=/usr/bin/etcdctl rm --recursive /deis/services/{name}-{version}/{name}-{version}-{unit}
+
+[X-Fleet]
+X-ConditionMachineOf={name}-{version}-{unit}.service

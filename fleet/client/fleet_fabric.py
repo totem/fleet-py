@@ -62,7 +62,7 @@ class Provider:
             else:
                 return None
 
-    def deploy(self, service_name, service_data_stream):
+    def deploy(self, service_name, service_data_stream, force_remove=False):
         destination_service = '{upload_dir}/{service_name}'. \
             format(service_name=service_name, upload_dir=FLEET_UPLOAD_DIR)
         with self._settings():
@@ -71,8 +71,12 @@ class Provider:
                     run('mkdir -p {}'.format(FLEET_UPLOAD_DIR), stdout=stream,
                         stderr=stream)
                     put(service_data_stream, destination_service)
-                    run('fleetctl destroy {destination_service} && '
-                        'fleetctl start -no-block {destination_service}'
+                    if force_remove:
+                        run('fleetctl destroy {destination_service}'
+                            .format(destination_service=destination_service),
+                            stdout=stream, stderr=stream)
+
+                    run('fleetctl start -no-block {destination_service}'
                         .format(destination_service=destination_service),
                         stdout=stream, stderr=stream)
             finally:

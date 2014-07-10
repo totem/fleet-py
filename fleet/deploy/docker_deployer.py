@@ -6,68 +6,6 @@ __author__ = 'sukrit'
 import fleet.client as fleet_client
 import  template_manager as tmgr
 
-TEMPLATES = {
-    "default_app":"""
-[Unit]
-Description={name}-{version}-{unit} Application
-
-[Service]
-Restart=always
-RestartSec=20s
-TimeoutStartSec=20m
-ExecStartPre=/usr/bin/docker pull {image}
-ExecStartPre=/bin/sh -c 'docker inspect {name}-{version} >/dev/null && \\
-             docker rm -f {name}-{version} || true'
-ExecStart=/bin/sh -c '/usr/bin/docker run -P --rm {docker_args} {docker_env} \\
-          --name {name}-{version} {image} {app_cmd}'
-ExecStop=/usr/bin/docker rm -f {name}-{version} > /dev/null || true
-
-[X-Fleet]
-X-Conflicts={name}-{version}-*.service
-    """,
-
-
-
-    "default_logger": """
-[Unit]
-Description={name}-{version}-{unit} Logger
-BindsTo={name}-{version}-{unit}.service
-
-[Service]
-Restart=always
-RestartSec=20s
-ExecStartPre=/bin/sh -c "until docker inspect {name}-{version} >/dev/null 2>&1; do sleep 1; done"
-ExecStart=/bin/sh -c "docker logs -f {name}-{version} 2>&1 | logger -p local0.info -t \\"{name} {version} {unit}\\" --udp --server $(etcdctl get /deis/logs/host | cut -d ':' -f1) --port $(etcdctl get /deis/logs/port | cut -d ':' -f2)"
-
-
-[X-Fleet]
-X-ConditionMachineOf={name}-{version}-{unit}.service
-""",
-
-    "default_register": """
-[Unit]
-Description={name}-{version}-{unit} Register
-BindsTo={name}-{version}-{unit}.service
-
-[Service]
-EnvironmentFile=/etc/environment
-Restart=always
-RestartSec=20s
-
-ExecStartPre=/bin/sh -c "until docker inspect -f '{{{{range $i, $e := .HostConfig.PortBindings }}}}{{{{$p := index $e 0}}}}{{{{$p.HostPort}}}}{{{{end}}}}' {name}-{version} >/dev/null 2>&1; \\
-  do sleep 2; done; \\
-  port=$(docker inspect -f '{{{{range $i, $e := .HostConfig.PortBindings }}}}{{{{$p := index $e 0}}}}{{{{$p.HostPort}}}}{{{{end}}}}' {name}-{version}); \\
-  echo Waiting for $port/tcp...; until netstat -lnt | grep :$port >/dev/null; do sleep 1; done"
-ExecStart=/bin/sh -c "port=$(docker inspect -f '{{{{range $i, $e := .HostConfig.PortBindings }}}}{{{{$p := index $e 0}}}}{{{{$p.HostPort}}}}{{{{end}}}}' {name}-{version}); echo Connected to $COREOS_PRIVATE_IPV4:$port/tcp, publishing to etcd...; while netstat -lnt | grep :$port >/dev/null; do etcdctl set /deis/services/{name}-{version}/{name}-{version}-{unit} $COREOS_PRIVATE_IPV4:$port --ttl 60 >/dev/null; sleep 45; done"
-ExecStop=/usr/bin/etcdctl rm --recursive /deis/services/{name}-{version}/{name}-{version}-{unit}
-
-[X-Fleet]
-X-ConditionMachineOf={name}-{version}-{unit}.service
-    """
-
-
-}
-
 class Deployment:
     def __init__(self, **kwargs):
         template_group = kwargs.get('template_group', 'default')
@@ -177,52 +115,52 @@ if __name__ == "__main__":
         hosts='core@ec2-54-176-123-236.us-west-1.compute.amazonaws.com')
 
     num_nodes=3
-    # undeploy(provider,
-    #          name='apache',
-    #          version='a234wdsa34',
-    #          nodes=num_nodes
-    # )
-    #
-    # #In SWF We will poll
-    # sleep(10)
-    #
-    # deploy(provider,
-    #     image='coreos/apache',
-    #     template_group='default',
-    #     name='apache',
-    #     version='a234wdsa34',
-    #     use_logger=True,
-    #     use_register=True,
-    #     nodes = num_nodes,
-    #     docker_args='-p :80',
-    #     app_cmd='/bin/bash -c "echo \\\\"<h1>a234wdsa34</h1>\\\\" \
-    #         >/var/www/index.html &&\
-    #         /usr/sbin/apache2ctl -D FOREGROUND"' )
-    #
-    # sleep(10)
-    #
-    # print app_status(provider,
-    #            name='apache',
-    #            version='a234wdsa34',
-    #            node_num=1
-    #            )
-
-
-    num_nodes=2
     undeploy(provider,
-             name='spec-python-master',
-             version='d0c5b0fc5ebe1f73d00e99b9b783054ac70a894e',
+             name='apache',
+             version='a234wdsa34',
              nodes=num_nodes
     )
+
+    #In SWF We will poll
     sleep(10)
+
     deploy(provider,
-        image='quay.io/totem/totem-spec-python:d0c5b0fc5ebe1f73d00e99b9b783054ac70a894e',
-        template_group='multinode',
-        name='spec-python-master',
-        version='d0c5b0fc5ebe1f73d00e99b9b783054ac70a894e',
+        image='coreos/apache',
+        template_group='default',
+        name='apache',
+        version='a234wdsa34',
         use_logger=True,
         use_register=True,
-        nodes = num_nodes)
+        nodes = num_nodes,
+        docker_args='-p :80',
+        app_cmd='''/bin/bash -c \'echo \\"<h1>a234wdsa34</h1>\\" \\
+            >/var/www/index.html &&\\
+            /usr/sbin/apache2ctl -D FOREGROUND\'''' )
+
+    sleep(10)
+
+    print app_status(provider,
+               name='apache',
+               version='a234wdsa34',
+               node_num=1
+               )
+
+
+    # num_nodes=3
+    # undeploy(provider,
+    #          name='spec-python-master',
+    #          version='d0c5b0fc5ebe1f73d00e99b9b783054ac70a894e',
+    #          nodes=num_nodes
+    # )
+    # sleep(10)
+    # deploy(provider,
+    #     image='quay.io/totem/totem-spec-python:d0c5b0fc5ebe1f73d00e99b9b783054ac70a894e',
+    #     template_group='default',
+    #     name='spec-python-master',
+    #     version='d0c5b0fc5ebe1f73d00e99b9b783054ac70a894e',
+    #     use_logger=True,
+    #     use_register=True,
+    #     nodes = num_nodes)
 
 
 

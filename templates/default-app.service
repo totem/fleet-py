@@ -6,10 +6,11 @@ Restart=always
 RestartSec=20s
 TimeoutStartSec=20m
 ExecStartPre=/usr/bin/docker pull {image}
-ExecStartPre=/bin/sh -xc "docker inspect {name}-{version} 1>/dev/null 2>&1 && docker rm -f {name}-{version} || true"
-ExecStart=/bin/sh -xc "/usr/bin/docker run -P --rm {docker_args} {docker_env} \
-          --name {name}-{version} {image} {app_cmd}"
-ExecStop=/bin/sh -xc "docker inspect {name}-{version} 1>/dev/null 2>&1 && docker rm -f {name}-{version} || true"
+ExecStartPre=/bin/sh -xc "docker inspect {name}-{version}-{unit} 1>/dev/null 2>&1 && docker rm -f {name}-{version}-{unit} || true"
+ExecStart=/bin/sh -xc "/usr/bin/docker run {docker_args} -P  --rm  {docker_env} -e DISCOVER_APP_NAME={name} -e DISCOVER_APP_VERSION={version} \
+          -e DISCOVER_NODE_NAME={name}-{version}-{unit} -e DISCOVER_NODE_NUMBER={unit} \
+          --name {name}-{version}-{unit} {image} {app_cmd}"
+ExecStop=/bin/sh -xc "docker inspect {name}-{version}-{unit} 1>/dev/null 2>&1 && docker rm -f {name}-{version}-{unit} || true"
 
 [X-Fleet]
 X-Conflicts={name}-{version}-*.service

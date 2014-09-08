@@ -11,9 +11,9 @@ _PROVIDER_DICT = {
     'fabric': fleet_fabric.Provider
 }
 
-def get_provider(type=_DEFAULT_PROVIDER, **kwargs):
-    if type in _PROVIDER_DICT:
-        return _PROVIDER_DICT[type](**kwargs)
+def get_provider(provider_type=_DEFAULT_PROVIDER, **kwargs):
+    if provider_type in _PROVIDER_DICT:
+        return _PROVIDER_DICT[provider_type](**kwargs)
     else:
         return None
 

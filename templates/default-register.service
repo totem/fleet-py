@@ -11,7 +11,7 @@ ExecStartPre=/bin/sh -c "until docker inspect -f '{{{{range $i, $e := .HostConfi
   do sleep 2; done; \
   port=$(docker inspect -f '{{{{range $i, $e := .HostConfig.PortBindings }}}}{{{{$p := index $e 0}}}}{{{{$p.HostPort}}}}{{{{end}}}}' {name}-{version}); \
   echo Waiting for $port/tcp...; until netstat -lnt | grep :$port >/dev/null; do sleep 1; done"
-ExecStart=/bin/sh -c "port=$(docker inspect -f '{{{{range $i, $e := .HostConfig.PortBindings }}}}{{{{$p := index $e 0}}}}{{{{$p.HostPort}}}}{{{{end}}}}' {name}-{version}); echo Connected to $COREOS_PRIVATE_IPV4:$port/tcp, publishing to etcd...; while netstat -lnt | grep :$port >/dev/null; do etcdctl set /deis/services/{name}-{version}/{name}-{version}-{unit} $COREOS_PRIVATE_IPV4:$port --ttl 60 >/dev/null; sleep 45; done"
+ExecStart=/bin/sh -c "port=$(docker inspect -f '{{{{range $i, $e := .HostConfig.PortBindings }}}}{{{{$p := index $e 0}}}}{{{{$p.HostPort}}}}{{{{end}}}}' {name}-{version}); echo Connected to $COREOS_PRIVATE_IPV4:$port/tcp, publishing to etcd...; while netstat -lnt | grep :$port >/dev/null; do etcdctl set /yoda/upstreams/{name}-{version}/endpoints/{unit} /deis/services/{name}-{version}/{name}-{version}-{unit} $COREOS_PRIVATE_IPV4:$port --ttl 300 >/dev/null; sleep 45; done"
 ExecStop=/usr/bin/etcdctl rm --recursive /deis/services/{name}-{version}/{name}-{version}-{unit}
 
 [X-Fleet]

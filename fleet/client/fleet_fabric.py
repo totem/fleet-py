@@ -83,17 +83,18 @@ class Provider:
                 run('if [ -f {} ]; then echo {}; fi'
                     .format(destination_service, destination_service))
 
-    def destroy(self, service_name):
+    def destroy(self, service_prefix):
         with self._logger_stream() as stream:
             with self._settings():
-                run('fleetctl destroy {}'.format(service_name),
-                    stdout=stream, stderr=stream)
+                run('fleetctl list-units | grep {} | xargs fleetctl destroy'
+                        .format(service_prefix), stdout=stream, stderr=stream)
+
 
     def status(self, service_name):
         with self._logger_stream() as stream:
             with self._settings():
                 return run('fleetctl list-units | grep {} | '
-                           'awk \'{{{{print $5}}}}\''.format(service_name),
+                           'awk \'{{{{print $4}}}}\''.format(service_name),
                             stdout=stream, stderr=stream)
 
 

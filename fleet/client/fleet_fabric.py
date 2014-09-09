@@ -1,5 +1,5 @@
-from  cStringIO import StringIO
-
+#from  cStringIO import StringIO
+from io import BytesIO
 __author__ = 'sukrit'
 
 from fabric.api import run, execute, settings, runs_once, put, hide
@@ -135,7 +135,7 @@ class Provider:
 
 class LoggerStream:
     def __init__(self,stream=None, log_metadata={}):
-        self.stream = stream or StringIO()
+        self.stream = stream or BytesIO()
         self.log_metadata = log_metadata
 
     def __enter__(self):

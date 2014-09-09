@@ -1,4 +1,4 @@
-import fleet_fabric
+import fleet.client.fleet_fabric
 
 __author__ = 'sukrit'
 __all__ = ['get_provider','get_client','FleetClient']

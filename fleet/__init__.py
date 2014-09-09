@@ -1,7 +1,4 @@
-__all__ = ['deploy', 'undeploy', 'app_status', 'logger_status', 'Deployment']
+__all__ = ['deploy', 'undeploy', 'status', 'Deployment']
 
-import client
-import deploy
-
-from client import get_provider
-from deploy.docker_deployer import deploy, undeploy, status, Deployment
+from fleet.client import get_provider
+from fleet.deploy.docker_deployer import deploy, undeploy, status, Deployment

@@ -68,7 +68,8 @@ def undeploy(fleet_provider, name, version, service_type='app'):
         service_prefix = "{}-{}@".format(name, version)
     else:
         service_prefix = "{}-{}-{}@".format(name, service_type, version)
-    fleet_provider.destroy(service_prefix)
+    fleet_provider.destroy_units_matching(service_prefix)
+    fleet_provider.destroy('{}.service'.format(service_prefix))
 
 
 def status(fleet_provider, name, version, node_num, service_type='app'):

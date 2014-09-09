@@ -112,11 +112,17 @@ class Provider:
                 run('if [ -f {} ]; then echo {}; fi'
                     .format(destination_service, destination_service))
 
-    def destroy(self, service_prefix):
+    def destroy_units_matching(self, service_prefix):
         with self._logger_stream() as stream:
             with self._settings():
                 run('fleetctl list-units | grep {} | xargs fleetctl destroy'
                         .format(service_prefix), stdout=stream, stderr=stream)
+
+    def destroy(self, service):
+        with self._logger_stream() as stream:
+            with self._settings():
+                run('fleetctl destroy {}'.format(service), stdout=stream,
+                    stderr=stream)
 
 
     def status(self, service_name):

@@ -1,16 +1,16 @@
 [Unit]
-Description={name}-{version}-{unit} Application
+Description={name}-{version}@%i Application
 
 [Service]
 Restart=always
 RestartSec=20s
 TimeoutStartSec=20m
 ExecStartPre=/usr/bin/docker pull {image}
-ExecStartPre=/bin/sh -xc "docker inspect {name}-{version}-{unit} 1>/dev/null 2>&1 && docker rm -f {name}-{version}-{unit} || true"
-ExecStart=/bin/sh -xc "/usr/bin/docker run {docker_args} -P  --rm  {docker_env} -e DISCOVER_APP_NAME={name} -e DISCOVER_APP_VERSION={version} \
-          -e DISCOVER_NODE_NAME={name}-{version}-{unit} -e DISCOVER_NODE_NUMBER={unit} \
-          --name {name}-{version}-{unit} {image} {app_cmd}"
-ExecStop=/bin/sh -xc "docker inspect {name}-{version}-{unit} 1>/dev/null 2>&1 && docker rm -f {name}-{version}-{unit} || true"
+ExecStartPre=/bin/sh -xc "docker inspect {name}-{version}-%i 1>/dev/null 2>&1 && docker rm -f {name}-{version}-%i || true"
+ExecStart=/bin/sh -xc "/usr/bin/docker run -h {name}-{version}-%i {docker_args} -P  --rm  {docker_env} -e DISCOVER_APP_NAME={name} -e DISCOVER_APP_VERSION={version} \
+          -e DISCOVER_NODE_NAME={name}-{version}-%i -e DISCOVER_NODE_NUMBER=%i \
+          --name {name}-{version}-%i {image} {docker_cmd}"
+ExecStop=/bin/sh -xc "docker inspect {name}-{version}-%i 1>/dev/null 2>&1 && docker rm -f {name}-{version}-%i || true"
 
 [X-Fleet]
-X-Conflicts={name}-{version}-*.service
+X-Conflicts={name}-{version}@*.service

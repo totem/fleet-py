@@ -1,13 +1,13 @@
 [Unit]
-Description={name}-{version}-{unit} Logger
-BindsTo={name}-{version}-{unit}.service
+Description={name}-{version}@%i Logger
+BindsTo={name}-{version}@%i.service
 
 [Service]
 Restart=always
 RestartSec=20s
-ExecStartPre=/bin/sh -c "until docker inspect {name}-{version}-{unit} >/dev/null 2>&1; do sleep 1; done"
-ExecStart=/bin/sh -c "docker logs --tail=100 -f {name}-{version}-{unit} 2>&1 | logger -p local0.info -t '{name}-{version}-{unit}' --udp --server $(etcdctl get /totem/logs/host | cut -d ':' -f1) --port $(etcdctl get /totem/logs/port | cut -d ':' -f2)"
+ExecStartPre=/bin/sh -c "until docker inspect {name}-{version}-%i >/dev/null 2>&1; do sleep 1; done"
+ExecStart=/bin/sh -c "docker logs --tail=100 -f {name}-{version}-%i 2>&1 | logger -p local0.info -t '{name}-{version}-%i' --udp --server $(etcdctl get /totem/logs/host | cut -d ':' -f1) --port $(etcdctl get /totem/logs/port | cut -d ':' -f2)"
 
 
 [X-Fleet]
-X-ConditionMachineOf={name}-{version}-{unit}.service
+X-ConditionMachineOf={name}-{version}@%i.service

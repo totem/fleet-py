@@ -1,4 +1,3 @@
-import fleetctl_wrapper as fleetctl
 import fleet_fabric
 
 __author__ = 'sukrit'
@@ -7,7 +6,6 @@ __all__ = ['get_provider','get_client','FleetClient']
 _DEFAULT_PROVIDER = 'fabric'
 
 _PROVIDER_DICT = {
-    'fleetctl': fleetctl.Provider,
     'fabric': fleet_fabric.Provider
 }
 

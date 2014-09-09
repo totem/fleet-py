@@ -62,6 +62,35 @@ class Provider:
             else:
                 return None
 
+    def deploy_units(self, template_name, service_data_stream, units=1):
+        """
+        :param template_name: Template name must contain '@' param for
+            deploying multiple instances
+        :param service_data_stream: Stream cotaining template data
+        :param units: No. of units to deploy
+        :return: None
+        """
+
+        destination_service = '{upload_dir}/{template_name}'. \
+            format(template_name=template_name, upload_dir=FLEET_UPLOAD_DIR)
+        with self._settings():
+            try:
+                with self._logger_stream() as stream:
+                    run('mkdir -p {}'.format(FLEET_UPLOAD_DIR), stdout=stream,
+                        stderr=stream)
+                    put(service_data_stream, destination_service)
+
+                    run('fleetctl submit {destination_service}'
+                        .format(destination_service=destination_service),
+                        stdout=stream, stderr=stream)
+                    service = template_name.replace('@', '@{1..%d}'% units)
+                    run('fleetctl start -no-block=true {service}'
+                        .format(service=service),
+                        stdout=stream, stderr=stream)
+            finally:
+                run('if [ -f {} ]; then echo rm {}; fi'
+                    .format(destination_service, destination_service))
+
     def deploy(self, service_name, service_data_stream, force_remove=False):
         destination_service = '{upload_dir}/{service_name}'. \
             format(service_name=service_name, upload_dir=FLEET_UPLOAD_DIR)
@@ -98,7 +127,6 @@ class Provider:
                             stdout=stream, stderr=stream)
 
 
-
 class LoggerStream:
     def __init__(self,stream=None, log_metadata={}):
         self.stream = stream or StringIO()
@@ -109,19 +137,3 @@ class LoggerStream:
 
     def __exit__(self, type, value, traceback):
         logger.info(self.stream.getvalue(), extra=self.log_metadata)
-
-
-
-if __name__ == '__main__':
-    FORMAT = '%(asctime)-15s %(message)s'
-    logging.basicConfig(format=FORMAT, level=logging.INFO)
-    provider = Provider(
-        'ec2-54-176-123-236.us-west-1.compute.amazonaws.com')
-    provider.log_metadata = {
-        'gitmeta': 'mygit'
-    }
-
-    provider.deploy('/home/sukrit/git/fleetpoc/service/vulcan/vulcan.1.service')
-    #provider.deploy('/home/sukrit/git/fleetpoc/service/vulcan/vulcan.2.service')
-    #provider.deploy('/home/sukrit/git/fleetpoc/service/vulcan/vulcan.3.service')
-    print(provider.status('vulcan.1.service'))

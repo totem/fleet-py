@@ -1,4 +1,4 @@
-# Fleet Client [![Build Status](https://travis-ci.org/totem/fleet-py.svg)](https://travis-ci.org/totem/fleet-py)
+# Fleet Client [![Build Status](https://travis-ci.org/totem/fleet-py.svg)](https://travis-ci.org/totem/fleet-py) [![Coverage Status](https://coveralls.io/repos/totem/fleet-py/badge.png)](https://coveralls.io/r/totem/fleet-py)
 
 Provide a simple to use Python library for 
 [Fleet](https://github.com/coreos/fleet). Some of the code and idea has been

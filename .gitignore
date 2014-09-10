@@ -2,3 +2,5 @@
 .idea/*
 *.iml
 tests/internal.py
+docs/build
+docs/build/*

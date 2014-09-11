@@ -1,9 +1,7 @@
 from cStringIO import StringIO
-from time import sleep
 
 __author__ = 'sukrit'
 
-import fleet.client as fleet_client
 import template_manager as tmgr
 
 
@@ -19,7 +17,7 @@ class Deployment:
         template_group = kwargs.get('template_group', 'default')
         template_url = kwargs.get(
             'template_url', tmgr.fetch_bundled_template_url(
-                group=template_group, type=self.service_type))
+                group=template_group, template_type=self.service_type))
 
         self.template = tmgr.fetch_template(template_url)
         self.image = kwargs.get('image', None)
@@ -29,7 +27,7 @@ class Deployment:
         self.docker_args = kwargs.get('docker_args', '')
         self.docker_env = kwargs.get('docker_env', '')
         self.docker_cmd = kwargs.get('docker_cmd', '')
-        self.template_args = kwargs.get('template_additional_vars',{})\
+        self.template_args = kwargs.get('template_additional_vars', {})\
             .copy()
         self.template_args.setdefault('image', self.image)
         self.template_args.setdefault('name', self.name)
@@ -51,7 +49,7 @@ class Deployment:
     def deploy(self):
         if self.service_type == 'app':
             service_name_prefix = '{}-{}'.format(self.name, self.version)
-        else :
+        else:
             service_name_prefix = '{}-{}-{}'.format(
                 self.name, self.service_type, self.version)
         self._deploy(service_name_prefix)
@@ -60,7 +58,6 @@ class Deployment:
 def deploy(fleet_provider, **kwargs):
     deployment = Deployment(fleet_provider, **kwargs)
     deployment.deploy()
-    #Replace
 
 
 def undeploy(fleet_provider, name, version, service_type='app'):

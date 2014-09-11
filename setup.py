@@ -7,7 +7,7 @@ setup(
     author='Sukrit Khera',
     author_email='',
     url='https://github.com/totem/fleet-py',
-    license = 'MIT',
-    platforms = 'Posix; MacOS X;',
+    license='MIT',
+    platforms='Posix; MacOS X;',
     packages=['fleet', 'templates']
 )

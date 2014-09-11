@@ -15,4 +15,4 @@ ExecStart=/bin/sh -xc "/usr/bin/docker run -h {name}--{service_type}-{version}-%
 ExecStop=/bin/sh -xc "docker inspect {name}-{service_type}-{version}-%i 1>/dev/null 2>&1 && docker rm -f {name}-{service_type}-{version}-%i || true"
 
 [X-Fleet]
-X-ConditionMachineOf={name}-{version}@%i.service
+MachineOf={name}-{version}@%i.service

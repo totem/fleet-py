@@ -1,3 +1,4 @@
+# flake8: noqa
 # -*- coding: utf-8 -*-
 #
 # fleet-py documentation build configuration file, created by

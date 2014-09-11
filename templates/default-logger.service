@@ -10,4 +10,4 @@ ExecStart=/bin/sh -c "docker logs --tail=100 -f {name}-{version}-%i 2>&1 | logge
 
 
 [X-Fleet]
-X-ConditionMachineOf={name}-{version}@%i.service
+MachineOf={name}-{version}@%i.service

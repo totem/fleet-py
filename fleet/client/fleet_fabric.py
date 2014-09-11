@@ -1,14 +1,12 @@
-#from  cStringIO import StringIO
 from io import BytesIO
 __author__ = 'sukrit'
 
-from fabric.api import run, execute, settings, runs_once, put, hide
+from fabric.api import run, settings, put, hide
 
 
 import logging
 
 import random
-import os
 
 DEFAULT_FAB_SETTINGS = {
     'timeout': 10,
@@ -23,17 +21,22 @@ DEFAULT_FAB_SETTINGS = {
 }
 
 FLEETCTL_VERSION_CMD = 'fleetctl version'
-FLEET_UPLOAD_DIR='/tmp/services'
+FLEET_UPLOAD_DIR = '/tmp/services'
 
 logger = logging.getLogger(__name__)
 
-def _apply_defaults(fab_settings, default_settings = DEFAULT_FAB_SETTINGS):
+
+def _apply_defaults(fab_settings, default_settings=DEFAULT_FAB_SETTINGS):
     fab_settings = fab_settings or {}
     for key, value in default_settings.iteritems():
         fab_settings.setdefault(key, value)
     return fab_settings
 
+
 class Provider:
+    """
+    Provider for fabric based implementation. Requires fabric : 1.10+
+    """
 
     def __init__(self, hosts='core@172.17.42.1', **kwargs):
         fab_settings = kwargs.get('fab_settings', {})
@@ -58,7 +61,7 @@ class Provider:
             version_string = version_string.decode(encoding='UTF-8').strip()
             if version_string.startswith('{} '.format(FLEETCTL_VERSION_CMD)):
                 return version_string.replace(
-                    '{} '.format(FLEETCTL_VERSION_CMD),'')
+                    '{} '.format(FLEETCTL_VERSION_CMD), '')
             else:
                 return None
 
@@ -83,7 +86,7 @@ class Provider:
                     run('fleetctl submit {destination_service}'
                         .format(destination_service=destination_service),
                         stdout=stream, stderr=stream)
-                    service = template_name.replace('@', '@{1..%d}'% units)
+                    service = template_name.replace('@', '@{1..%d}' % units)
                     run('fleetctl start -no-block=true {service}'
                         .format(service=service),
                         stdout=stream, stderr=stream)
@@ -116,7 +119,7 @@ class Provider:
         with self._logger_stream() as stream:
             with self._settings():
                 run('fleetctl list-units | grep {} | xargs fleetctl destroy'
-                        .format(service_prefix), stdout=stream, stderr=stream)
+                    .format(service_prefix), stdout=stream, stderr=stream)
 
     def destroy(self, service):
         with self._logger_stream() as stream:
@@ -124,22 +127,21 @@ class Provider:
                 run('fleetctl destroy {}'.format(service), stdout=stream,
                     stderr=stream)
 
-
     def status(self, service_name):
         with self._logger_stream() as stream:
             with self._settings():
                 return run('fleetctl list-units | grep {} | '
                            'awk \'{{{{print $4}}}}\''.format(service_name),
-                            stdout=stream, stderr=stream)
+                           stdout=stream, stderr=stream)
 
 
 class LoggerStream:
-    def __init__(self,stream=None, log_metadata={}):
+    def __init__(self, stream=None, log_metadata=None):
         self.stream = stream or BytesIO()
-        self.log_metadata = log_metadata
+        self.log_metadata = log_metadata or {}
 
     def __enter__(self):
         return self.stream
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, value, traceback):
         logger.info(self.stream.getvalue(), extra=self.log_metadata)

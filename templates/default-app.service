@@ -13,4 +13,4 @@ ExecStart=/bin/sh -xc "/usr/bin/docker run -h {name}-{version}-%i {docker_args} 
 ExecStop=/bin/sh -xc "docker inspect {name}-{version}-%i 1>/dev/null 2>&1 && docker rm -f {name}-{version}-%i || true"
 
 [X-Fleet]
-X-Conflicts={name}-{version}@*.service
+Conflicts={name}-{version}@*.service

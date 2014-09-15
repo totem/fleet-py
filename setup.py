@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(
-    name='fleet-sdk',
+    name='fleet-py',
     version='0.1.0',
     description='Fleet SDK Wrapper for Python',
     author='Sukrit Khera',

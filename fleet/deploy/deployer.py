@@ -1,24 +1,28 @@
-from cStringIO import StringIO
-from jinja2 import Environment, PrefixLoader, FileSystemLoader, ChoiceLoader
-import time
-from fleet.client import get_provider
-from fleet.deploy.github_loader import GithubTemplateLoader
-
 __author__ = 'sukrit'
 
-import template_manager as tmgr
+from cStringIO import StringIO
+import time
+
+from jinja2 import Environment, FileSystemLoader, ChoiceLoader
+
+from fleet.deploy.github_loader import GithubTemplateLoader
 
 
-def default_jinja_environment(local_search_path=['./templates']):
+def default_jinja_environment(local_search_path=None):
     """
-    Creates default environment using github template loader.
-    :param github_token: Github token for connecting to private repositories.
-        Use none for connecting to public repositories only.
-    :return:
+    Creates default jinja environment using FileSystemLoader and
+    GithubTemplateLoader. Basically , it will try to locate the template in
+    local file system first. If not found, it will try to find it in public
+    github repository (https://github.com/totem/fleet-templates).
+
+    :param local_search_path: Local path for searching the templates
+    :type local_search_path: list or str
+    :return: Jinja Environment
+    :rtype: Environment
     """
     return Environment(
         loader=ChoiceLoader([
-            FileSystemLoader(local_search_path),
+            FileSystemLoader(local_search_path or ['./templates']),
             GithubTemplateLoader()
         ]))
 
@@ -26,16 +30,30 @@ def default_jinja_environment(local_search_path=['./templates']):
 class Deployment:
     """
     Class for creating new deployment using Jinja templates
+
+    :param fleet_provider: Fleet provider for connecting to fleet cluster.
+    :param jinja_env: Jinja environment for loading Jinja templates.
+    :param template: Template to be used for creating cluster deployment.
+    :param name: Application name
+    :param version: Application version
+    :param nodes: No. of nodes to be created for the deployment.
+    :param service_type: Type of service to be created. This is basically used
+        for naming fleet services.
+    :param template_args: Arguments to be passed to the jinja template for
+        creating fleet unit files.
     """
-    def __init__(self, fleet_provider, jinja_env, template, name,
-                 version=None, nodes=1, service_type='app', template_args={}):
+    def __init__(self, fleet_provider, jinja_env, name, template='default-app',
+                 version=None, nodes=1, service_type='app',
+                 template_args=None):
         self.fleet_provider = fleet_provider
         self.service_type = service_type
         self.nodes = nodes
         self.jinja_env = jinja_env
         self.name = name
         self.template = template
+        # If version is not set, use current timestamp in ms.
         self.version = str(version) or str(int(round(time.time() * 1000)))
+        self.template_args = template_args or {}
         self.template_args = template_args.copy()
         self.template_args.setdefault('name', self.name)
         self.template_args.setdefault('version', self.version)
@@ -48,7 +66,6 @@ class Deployment:
             .render(template_args)
         template_stream = StringIO()
         template_stream.write(template_data)
-        print(template_data)
         self.fleet_provider.deploy_units(template_name, template_stream,
                                          units=self.nodes)
 
@@ -66,6 +83,14 @@ class Deployment:
 
 
 def undeploy(fleet_provider, name, version, service_type='app'):
+    """
+    Undeploys the application from the fleet cluster.
+    :param fleet_provider:
+    :param name:
+    :param version:
+    :param service_type:
+    :return:
+    """
     if service_type == 'app':
         service_prefix = "{}-{}@".format(name, version)
     else:
@@ -75,37 +100,18 @@ def undeploy(fleet_provider, name, version, service_type='app'):
 
 
 def status(fleet_provider, name, version, node_num, service_type='app'):
+    """
+    Gets the status for a node in cluster.
+    :param fleet_provider:
+    :param name:
+    :param version:
+    :param node_num:
+    :param service_type:
+    :return:
+    """
     if service_type == 'app':
         service = "{}-{}@{}.service".format(name, version, node_num)
     else:
         service = "{}-{}-{}@{}.service".format(
             name, service_type, version, node_num)
     fleet_provider.status(service)
-
-if __name__ == '__main__':
-    provider = get_provider(
-        hosts='core@east.th.melt.sh')
-
-    jinja_env = default_jinja_environment(
-        local_search_path=['/home/sukrit/git/fleet-templates/templates1'])
-
-    deployment = Deployment(
-        fleet_provider=provider,
-        jinja_env=jinja_env,
-        template='default-app.service',
-        template_args={
-            'image': 'quay.io/totem/totem-spec-python:'
-                     '892d0d662a70fa2f198037fc18e742a927f8e4cf',
-            },
-        name='totem-spec-python',
-        version='1412033793605',
-        nodes=2,
-        service_type='app')
-
-    undeploy(fleet_provider=provider, name=deployment.name,
-             version=deployment.version, service_type='app')
-
-    deployment.deploy()
-    #deployment.deploy()
-
-

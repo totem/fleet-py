@@ -1,8 +1,8 @@
-from jinja2 import BaseLoader, TemplateNotFound, Environment, PrefixLoader, \
+import base64
+
+from jinja2 import BaseLoader, TemplateNotFound, Environment, \
     ChoiceLoader
 import requests
-
-import base64
 
 
 class InvalidCredentials(Exception):

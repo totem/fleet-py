@@ -1,4 +1,5 @@
-from jinja2 import BaseLoader, TemplateNotFound, Environment, PrefixLoader
+from jinja2 import BaseLoader, TemplateNotFound, Environment, PrefixLoader, \
+    ChoiceLoader
 import requests
 
 import base64
@@ -13,7 +14,8 @@ class GithubTemplateLoader(BaseLoader):
     Jinja2 template loader using github API.
     """
 
-    def __init__(self, token=None):
+    def __init__(self, owner='totem', repo='fleet-templates', path='templates',
+                 ref='master', token=None):
         """
         Constructor
         :param token: Option token used for connecting to repositories. If None
@@ -21,22 +23,26 @@ class GithubTemplateLoader(BaseLoader):
         :type token: str
         """
         self.token = token
+        self.owner = owner
+        self.repo = repo
+        self.path = path
+        self.ref = ref
         self.auth = (self.token, 'x-oauth-basic') if self.token else None
 
-    def _github_fetch(self, template_path, owner, repo, path, ref):
+    def _github_fetch(self, name):
         path_params = {
-            'owner': owner,
-            'repo': repo,
-            'path': path
+            'owner': self.owner,
+            'repo': self.repo,
+            'path': '%s/%s' % (self.path, name)
         }
         query_params = {
-            'ref': ref
+            'ref': self.ref
         }
         resp = requests.get(
             'https://api.github.com/repos/{owner}/{repo}/contents/{path}'
             .format(**path_params), params=query_params, auth=self.auth)
         if resp.status_code == 404:
-            raise TemplateNotFound(template_path)
+            raise TemplateNotFound(name)
         elif resp.status_code == 401:
             raise InvalidCredentials()
         elif resp.status_code != 200:
@@ -44,14 +50,14 @@ class GithubTemplateLoader(BaseLoader):
                                'calling github. Message: %s' % resp.text)
         return resp.json()
 
-    def _github_sha(self, owner, repo, path, ref):
+    def _github_sha(self, name):
         path_params = {
-            'owner': owner,
-            'repo': repo,
+            'owner': self.owner,
+            'repo': self.repo,
         }
         query_params = {
-            'path': path,
-            'sha': ref
+            'path': '%s/%s' % (self.path, name),
+            'sha': self.ref
         }
         resp = requests.get(
             'https://api.github.com/repos/{owner}/{repo}/commits'
@@ -59,33 +65,26 @@ class GithubTemplateLoader(BaseLoader):
         if resp.status_code != 200:
             return None
         else:
-            return resp.json()[0][u'sha']
+            commits = resp.json()
+            return commits[0][u'sha'] if len(commits) > 0 else None
 
-    def get_source(self, environment, template_path):
-        git_split = template_path.split(':')
-        if len(git_split) <= 3:
-            raise ValueError('Template path(%s) is invalid. Expecting path to '
-                             'use format: {owner}:{repo}:{path}:{ref} %d'
-                             % template_path)
-        owner, repo, path, ref = git_split
-        sha = self._github_sha(owner, repo, path, ref)
-        github_data = self._github_fetch(template_path, owner, repo, path, sha)
+    def get_source(self, environment, name):
+        sha = self._github_sha(name)
+        github_data = self._github_fetch(name)
         contents = base64.decodestring(github_data[u'content'])
 
         def uptodate():
-            return sha == self._github_sha(owner, repo, path, ref)
+            return sha == self._github_sha(name)
         return contents, None, uptodate
 
 
 if __name__ == "__main__":
     env = Environment(
-        loader=PrefixLoader({
-            'github': GithubTemplateLoader()
-        }, delimiter='>'))
-    template = env.get_template(
-        'github>totem:fleet-templates:templates/default-app.service:master')
+        loader=ChoiceLoader([
+            GithubTemplateLoader()
+        ]))
+    template = env.get_template('default-app.service')
     print(template.render())
 
-    template = env.get_template(
-        'github>totem:fleet-templates:templates/default-app.service:master')
+    template = env.get_template('default-app.service')
     print(template.render())

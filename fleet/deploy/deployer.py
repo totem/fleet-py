@@ -53,8 +53,7 @@ class Deployment:
         self.template = template
         # If version is not set, use current timestamp in ms.
         self.version = str(version) or str(int(round(time.time() * 1000)))
-        self.template_args = template_args or {}
-        self.template_args = template_args.copy()
+        self.template_args = template_args.copy() if template_args else {}
         self.template_args.setdefault('name', self.name)
         self.template_args.setdefault('version', self.version)
         self.template_args.setdefault('service_type', self.service_type)

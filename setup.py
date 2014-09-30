@@ -9,5 +9,5 @@ setup(
     url='https://github.com/totem/fleet-py',
     license='MIT',
     platforms='Posix; MacOS X;',
-    packages=['fleet', 'templates', 'fleet.client', 'fleet.deploy']
+    packages=['fleet', 'fleet.client', 'fleet.deploy']
 )

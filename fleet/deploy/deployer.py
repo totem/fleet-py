@@ -84,7 +84,7 @@ class Deployment:
 
 def undeploy(fleet_provider, name, version, service_type='app'):
     """
-    Undeploys the application from the fleet cluster.
+    Un-deploys the application from the fleet cluster.
     :param fleet_provider:
     :param name:
     :param version:

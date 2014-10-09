@@ -52,18 +52,29 @@ class Provider:
                         host_string=self.host,
                         **additional_settings)
 
-    def _logger_stream(self):
-        return LoggerStream(log_metadata=self.log_metadata)
+    def _fabric_wrapper(self):
+        return FabricWrapper(log_metadata=self.log_metadata)
+
+    def _fabric_error_wrapper(self):
+        pass
 
     def client_version(self):
         with self._settings():
-            version_string = run(FLEETCTL_VERSION_CMD)
-            version_string = version_string.decode(encoding='UTF-8').strip()
-            if version_string.startswith('{} '.format(FLEETCTL_VERSION_CMD)):
-                return version_string.replace(
-                    '{} '.format(FLEETCTL_VERSION_CMD), '')
-            else:
-                return None
+            with self._fabric_wrapper() as stream:
+                try:
+                    version_string = run(FLEETCTL_VERSION_CMD, stderr=stream)
+                except SystemExit:
+                    raise FleetExecutionException(
+                        message='Failed to get fleet client version',
+                        command_output=stream.getvalue())
+                version_string = version_string.decode(encoding='UTF-8')\
+                    .strip()
+                if version_string.startswith('{} '
+                                             .format(FLEETCTL_VERSION_CMD)):
+                    return version_string.replace(
+                        '{} '.format(FLEETCTL_VERSION_CMD), '')
+                else:
+                    return None
 
     def deploy_units(self, template_name, service_data_stream, units=1):
         """
@@ -77,8 +88,9 @@ class Provider:
         destination_service = '{upload_dir}/{template_name}'. \
             format(template_name=template_name, upload_dir=FLEET_UPLOAD_DIR)
         with self._settings():
-            try:
-                with self._logger_stream() as stream:
+
+            with self._fabric_wrapper() as stream:
+                try:
                     run('mkdir -p {}'.format(FLEET_UPLOAD_DIR), stdout=stream,
                         stderr=stream)
                     put(service_data_stream, destination_service)
@@ -90,16 +102,20 @@ class Provider:
                     run('fleetctl start -no-block=true {service}'
                         .format(service=service),
                         stdout=stream, stderr=stream)
-            finally:
-                run('if [ -f {} ]; then echo rm {}; fi'
-                    .format(destination_service, destination_service))
+                except SystemExit:
+                    raise FleetExecutionException(
+                        message='Failed to deploy unit: %s' % template_name,
+                        command_output=stream.getvalue())
+                finally:
+                    run('if [ -f {} ]; then echo rm {}; fi'
+                        .format(destination_service, destination_service))
 
     def deploy(self, service_name, service_data_stream, force_remove=False):
         destination_service = '{upload_dir}/{service_name}'. \
             format(service_name=service_name, upload_dir=FLEET_UPLOAD_DIR)
         with self._settings():
-            try:
-                with self._logger_stream() as stream:
+            with self._fabric_wrapper() as stream:
+                try:
                     run('mkdir -p {}'.format(FLEET_UPLOAD_DIR), stdout=stream,
                         stderr=stream)
                     put(service_data_stream, destination_service)
@@ -111,32 +127,67 @@ class Provider:
                     run('fleetctl start -no-block {destination_service}'
                         .format(destination_service=destination_service),
                         stdout=stream, stderr=stream)
-            finally:
-                run('if [ -f {} ]; then echo {}; fi'
-                    .format(destination_service, destination_service))
+                except SystemExit:
+                    raise FleetExecutionException(
+                        message='Failed to deploy service: %s' % service_name,
+                        command_output=stream.getvalue())
+                finally:
+                    run('if [ -f {} ]; then echo {}; fi'
+                        .format(destination_service, destination_service))
 
     def destroy_units_matching(self, service_prefix):
-        with self._logger_stream() as stream:
+        with self._fabric_wrapper() as stream:
             with self._settings():
-                run('fleetctl list-unit-files | grep {} | '
-                    'awk \'{{print $1}}\' | xargs fleetctl destroy'
-                    .format(service_prefix), stdout=stream, stderr=stream)
+                try:
+                    run('fleetctl list-unit-files | grep {} | '
+                        'awk \'{{print $1}}\' | xargs fleetctl destroy'
+                        .format(service_prefix), stdout=stream, stderr=stream)
+                except SystemExit:
+                    raise FleetExecutionException(
+                        message='Failed to destroy units with prefix: %s'
+                                % service_prefix,
+                        command_output=stream.getvalue())
 
     def destroy(self, service):
-        with self._logger_stream() as stream:
+        with self._fabric_wrapper() as stream:
             with self._settings():
-                run('fleetctl destroy {}'.format(service), stdout=stream,
-                    stderr=stream)
+                try:
+                    run('fleetctl destroy {}'.format(service), stdout=stream,
+                        stderr=stream)
+                except SystemExit:
+                    raise FleetExecutionException(
+                        message='Failed to destroy unit: %s'
+                                % service,
+                        command_output=stream.getvalue())
 
     def status(self, service_name):
-        with self._logger_stream() as stream:
+        with self._fabric_wrapper() as stream:
             with self._settings():
-                return run('fleetctl list-units | grep {} | '
-                           'awk \'{{{{print $4}}}}\''.format(service_name),
-                           stdout=stream, stderr=stream)
+                try:
+                    return run('fleetctl list-units | grep {} | '
+                               'awk \'{{{{print $4}}}}\''.format(service_name),
+                               stdout=stream, stderr=stream)
+                except SystemExit:
+                    raise FleetExecutionException(
+                        message='Failed to get status for unit: %s'
+                                % service_name,
+                        command_output=stream.getvalue())
 
 
-class LoggerStream:
+class FleetExecutionException(Exception):
+    def __init__(self, message='One or more commands failed to get '
+                               'executed on coreos cluster.',
+                 command_output='', log_metadata=None):
+        self.message = message
+        self.command_output = command_output
+        self.log_metadata = log_metadata
+
+    def __repr__(self):
+        return 'message:%s \noutput: %s \nmetadata:%r' % \
+            (self.message, self.command_output, self.log_metadata)
+
+
+class FabricWrapper:
     def __init__(self, stream=None, log_metadata=None):
         self.stream = stream or BytesIO()
         self.log_metadata = log_metadata or {}
@@ -145,4 +196,8 @@ class LoggerStream:
         return self.stream
 
     def __exit__(self, exc_type, value, traceback):
-        logger.info(self.stream.getvalue(), extra=self.log_metadata)
+        output = self.stream.getvalue()
+        if isinstance(value, BaseException):
+            logger.exception(value)
+        else:
+            logger.info(output, extra=self.log_metadata)

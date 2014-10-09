@@ -108,7 +108,8 @@ class Provider:
                         command_output=stream.getvalue())
                 finally:
                     run('if [ -f {} ]; then echo rm {}; fi'
-                        .format(destination_service, destination_service))
+                        .format(destination_service, destination_service),
+                        warn_only=True)
 
     def deploy(self, service_name, service_data_stream, force_remove=False):
         destination_service = '{upload_dir}/{service_name}'. \
@@ -133,7 +134,8 @@ class Provider:
                         command_output=stream.getvalue())
                 finally:
                     run('if [ -f {} ]; then echo {}; fi'
-                        .format(destination_service, destination_service))
+                        .format(destination_service, destination_service),
+                        warn_only=True)
 
     def destroy_units_matching(self, service_prefix):
         with self._fabric_wrapper() as stream:

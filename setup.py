@@ -1,7 +1,11 @@
 from distutils.core import setup
 
+with open('requirements.txt') as req_file:
+    requirements = req_file.read().splitlines()
+
 setup(
     name='fleet-py',
+    install_requires=requirements,
     version='0.1.0',
     description='Fleet SDK Wrapper for Python',
     author='Sukrit Khera',

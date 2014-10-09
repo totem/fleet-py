@@ -174,11 +174,13 @@ class FleetExecutionException(Exception):
                  command_output='', log_metadata=None):
         self.message = message
         self.command_output = command_output
-        self.log_metadata = log_metadata
 
     def __repr__(self):
-        return 'message:%s \noutput: %s \nmetadata:%r' % \
-            (self.message, self.command_output, self.log_metadata)
+        return 'FleetExecutionException: %s \noutput: %s' % \
+            (self.message, self.command_output)
+
+    def __str__(self):
+        return self.__repr__()
 
 
 class FabricWrapper:

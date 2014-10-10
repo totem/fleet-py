@@ -42,7 +42,8 @@ class Deployment:
     :param template_args: Arguments to be passed to the jinja template for
         creating fleet unit files.
     """
-    def __init__(self, fleet_provider, jinja_env, name, template='default-app',
+    def __init__(self, fleet_provider, jinja_env, name,
+                 template='default-app.service',
                  version=None, nodes=1, service_type='app',
                  template_args=None):
         self.fleet_provider = fleet_provider

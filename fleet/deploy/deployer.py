@@ -51,7 +51,11 @@ class Deployment:
         self.nodes = nodes
         self.jinja_env = jinja_env
         self.name = name
-        self.template = template
+
+        if not template.endswith('.service'):
+            self.template = template + '.service'
+        else:
+            self.template = template
         # If version is not set, use current timestamp in ms.
         self.version = str(version) or str(int(round(time.time() * 1000)))
         self.template_args = template_args.copy() if template_args else {}
@@ -74,11 +78,8 @@ class Deployment:
         Provisions the deployment
         :return: None
         """
-        if self.service_type == 'app':
-            service_name_prefix = '{}-{}'.format(self.name, self.version)
-        else:
-            service_name_prefix = '{}-{}-{}'.format(
-                self.name, self.service_type, self.version)
+        service_name_prefix = '{}-{}-{}'.format(
+            self.name, self.version, self.service_type)
         self._deploy(service_name_prefix)
 
 
@@ -91,10 +92,7 @@ def undeploy(fleet_provider, name, version, service_type='app'):
     :param service_type:
     :return:
     """
-    if service_type == 'app':
-        service_prefix = "{}-{}@".format(name, version)
-    else:
-        service_prefix = "{}-{}-{}@".format(name, service_type, version)
+    service_prefix = "{}-{}-{}@".format(name, version, service_type)
     fleet_provider.destroy_units_matching(service_prefix)
     fleet_provider.destroy('{}.service'.format(service_prefix))
 
@@ -109,9 +107,6 @@ def status(fleet_provider, name, version, node_num, service_type='app'):
     :param service_type:
     :return:
     """
-    if service_type == 'app':
-        service = "{}-{}@{}.service".format(name, version, node_num)
-    else:
-        service = "{}-{}-{}@{}.service".format(
-            name, service_type, version, node_num)
+    service = "{}-{}-{}@{}.service".format(
+        name, version, service_type, node_num)
     fleet_provider.status(service)

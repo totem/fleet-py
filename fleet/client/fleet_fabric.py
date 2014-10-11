@@ -174,6 +174,7 @@ class FleetExecutionException(Exception):
                  command_output='', log_metadata=None):
         self.message = message
         self.command_output = command_output
+        Exception.__init__(self, message, command_output, log_metadata)
 
     def __repr__(self):
         return 'FleetExecutionException: %s \noutput: %s' % \

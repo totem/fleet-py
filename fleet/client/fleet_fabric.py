@@ -133,6 +133,9 @@ class Provider:
         with self._fabric_wrapper() as stream:
             with self._settings():
                 try:
+                    run('fleetctl list-units | grep {} | '
+                        'awk \'{{print $1}}\' | xargs fleetctl destroy'
+                        .format(service_prefix), stdout=stream, stderr=stream)
                     run('fleetctl list-unit-files | grep {} | '
                         'awk \'{{print $1}}\' | xargs fleetctl destroy'
                         .format(service_prefix), stdout=stream, stderr=stream)

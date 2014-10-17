@@ -8,7 +8,9 @@ from jinja2 import Environment, FileSystemLoader, ChoiceLoader
 from fleet.deploy.github_loader import GithubTemplateLoader
 
 
-def default_jinja_environment(local_search_path=None):
+def default_jinja_environment(local_search_path=None, owner='totem',
+                              repo='fleet-templates', path='templates',
+                              ref='master', token=None):
     """
     Creates default jinja environment using FileSystemLoader and
     GithubTemplateLoader. Basically , it will try to locate the template in

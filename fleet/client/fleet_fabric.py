@@ -1,4 +1,6 @@
 from io import BytesIO
+from fleet.client import fleet_base
+
 __author__ = 'sukrit'
 
 from fabric.api import run, settings, put, hide
@@ -33,7 +35,7 @@ def _apply_defaults(fab_settings, default_settings=DEFAULT_FAB_SETTINGS):
     return fab_settings
 
 
-class Provider:
+class Provider(fleet_base.Provider):
     """
     Provider for fabric based implementation. Requires fabric : 1.10+
     """

@@ -121,4 +121,4 @@ def status(fleet_provider, name, version, node_num, service_type='app'):
     """
     service = "{}-{}-{}@{}.service".format(
         name, version, service_type, node_num)
-    fleet_provider.status(service)
+    return fleet_provider.status(service)

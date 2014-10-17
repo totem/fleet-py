@@ -163,9 +163,9 @@ class Provider(fleet_base.Provider):
         with self._fabric_wrapper() as stream:
             with self._settings():
                 try:
-                    return run('fleetctl list-units | grep {} | '
+                    return str(run('fleetctl list-units | grep {} | '
                                'awk \'{{{{print $4}}}}\''.format(service_name),
-                               stdout=stream, stderr=stream)
+                               stdout=stream, stderr=stream))
                 except SystemExit:
                     raise FleetExecutionException(
                         message='Failed to get status for unit: %s'

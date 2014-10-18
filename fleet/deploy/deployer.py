@@ -25,7 +25,8 @@ def default_jinja_environment(local_search_path=None, owner='totem',
     return Environment(
         loader=ChoiceLoader([
             FileSystemLoader(local_search_path or ['./templates']),
-            GithubTemplateLoader()
+            GithubTemplateLoader(owner=owner, repo=repo, path=path,
+                                 ref=ref, token=token)
         ]))
 
 

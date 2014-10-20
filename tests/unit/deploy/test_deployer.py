@@ -1,9 +1,38 @@
+from nose.tools import eq_
+from fleet.deploy.deployer import _get_service_prefix
 
 
-def test_undeploy_with_defaults():
+def test_get_service_name_prefix_for_all_versions():
     """
-    Should undeploy application with all versions and service types.
+    Should get service name prefix for all versions
     """
 
-    # Given: Instance of fleet provider
-    pass
+    # When: I get service name prefix for all version
+    service_prefix = _get_service_prefix('test', None, None)
+
+    # Then: Expected value for service prefix is returned
+    eq_(service_prefix, 'test')
+
+
+def test_get_service_name_prefix_for_given_version():
+    """
+    Should get service name prefix for given version
+    """
+
+    # When: I get service name prefix for all version
+    service_prefix = _get_service_prefix('test', 'v1', None)
+
+    # Then: Expected value for service prefix is returned
+    eq_(service_prefix, 'test-v1')
+
+
+def test_get_service_name_prefix_for_given_type():
+    """
+    Should get service name prefix for given version
+    """
+
+    # When: I get service name prefix for all version
+    service_prefix = _get_service_prefix('test', 'v1', 'app')
+
+    # Then: Expected value for service prefix is returned
+    eq_(service_prefix, 'test-v1-app@')

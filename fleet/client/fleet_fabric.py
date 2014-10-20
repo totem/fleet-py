@@ -1,5 +1,7 @@
 from io import BytesIO
+
 from fleet.client import fleet_base
+
 
 __author__ = 'sukrit'
 
@@ -147,6 +149,50 @@ class Provider(fleet_base.Provider):
                                 % service_prefix,
                         command_output=stream.getvalue())
 
+    def fetch_units_matching(self, service_prefix):
+        """
+        Fetch units matching prefix.
+
+        :param service_prefix:
+        :type service_prefix: str
+        :return: list of units where each unit is represented as dict
+            comprising of
+                - unit : Name of fleet unit,
+                - machine : Machine for the unit
+                - active : Activation status ('activating', 'active')
+                - sub : Current state of the unit
+        """
+        with self._fabric_wrapper() as stream:
+            with self._settings():
+                try:
+                    units_raw = run('fleetctl list-units -no-legend '
+                                    '-fields unit,machine,active,sub -full | '
+                                    'grep %s | awk \'{{print $1}}\'' %
+                                    service_prefix,
+                                    stdout=stream, stderr=stream,
+                                    warn_only=True)
+
+                    units = []
+
+                    for line in units_raw.splitlines():
+                        cols = line.split()
+                        if not cols:
+                            continue
+                        units.append({
+                            'unit': cols[0],
+                            'machine': cols[1],
+                            'active': cols[2],
+                            'sub': cols[3]
+                        })
+
+                    return units
+
+                except SystemExit:
+                    raise FleetExecutionException(
+                        message='Failed to Fetch units with prefix: %s'
+                                % service_prefix,
+                        command_output=stream.getvalue())
+
     def destroy(self, service):
         with self._fabric_wrapper() as stream:
             with self._settings():
@@ -165,7 +211,7 @@ class Provider(fleet_base.Provider):
                 try:
                     return run('fleetctl list-units | grep {} | '
                                'awk \'{{{{print $4}}}}\''.format(service_name),
-                                   stdout=stream, stderr=stream)
+                               stdout=stream, stderr=stream)
                 except SystemExit:
                     raise FleetExecutionException(
                         message='Failed to get status for unit: %s'

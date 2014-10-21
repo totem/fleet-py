@@ -42,6 +42,7 @@ def test_fetch_units_matching_with_multiple_match(mock_run):
     # And no existing units for given service prefix
     mock_run.return_value = '''cluster-deployer-develop-v1-app@1.service		442337f12da14ad7830cda843079730b/10.249.0.235	active	running
 cluster-deployer-develop-v1-app@2.service		0a5239ec591e4981905c792e99341f03/10.229.23.106	activating	start-pre
+invalidrow
     '''  # noqa
 
     # When: I try to fetch units with no matching unit

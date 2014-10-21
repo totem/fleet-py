@@ -176,7 +176,7 @@ class Provider(fleet_base.Provider):
 
                     for line in units_raw.splitlines():
                         cols = line.split()
-                        if not cols:
+                        if not cols or len(cols) < 4:
                             continue
                         units.append({
                             'unit': cols[0],

@@ -108,7 +108,8 @@ def _get_service_prefix(name, version, service_type):
         return '%s-%s-%s@' % (name, version, service_type)
 
 
-def undeploy(fleet_provider, name, version=None, service_type=None):
+def undeploy(fleet_provider, name, version=None, exclude_version=None,
+             service_type=None):
     """
     Un-deploys the application from the fleet cluster.
 
@@ -126,7 +127,9 @@ def undeploy(fleet_provider, name, version=None, service_type=None):
     """
 
     service_prefix = _get_service_prefix(name, version, service_type)
-    fleet_provider.destroy_units_matching(service_prefix)
+    exclude_prefix = _get_service_prefix(
+        name, exclude_version, service_type) if exclude_version else None
+    fleet_provider.destroy_units_matching(service_prefix, exclude_prefix)
 
 
 def filter_units(fleet_provider, name, version=None, service_type=None):

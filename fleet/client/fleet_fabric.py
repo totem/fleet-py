@@ -133,20 +133,25 @@ class Provider(fleet_base.Provider):
                         message='Failed to deploy service: %s' % service_name,
                         command_output=stream.getvalue())
 
-    def destroy_units_matching(self, service_prefix):
+    def destroy_units_matching(self, service_prefix, exclude_prefix=None):
         with self._fabric_wrapper() as stream:
             with self._settings():
                 try:
-                    run('fleetctl list-units | grep {} | '
-                        'awk \'{{print $1}}\' | xargs fleetctl destroy'
-                        .format(service_prefix), stdout=stream, stderr=stream)
-                    run('fleetctl list-unit-files | grep {} | '
-                        'awk \'{{print $1}}\' | xargs fleetctl destroy'
-                        .format(service_prefix), stdout=stream, stderr=stream)
+                    exclude_prefix = exclude_prefix or '^$'
+                    run('fleetctl list-units | grep \'%s\' | grep -v \'%s\' |'
+                        ' awk \'{print $1}\' | xargs fleetctl destroy'
+                        % (service_prefix, exclude_prefix), stdout=stream,
+                        stderr=stream)
+                    run('fleetctl list-unit-files | grep \'%s\' | '
+                        'grep -v \'%s\' | awk \'{print $1}\' | '
+                        'xargs fleetctl destroy'
+                        % (service_prefix, exclude_prefix), stdout=stream,
+                        stderr=stream)
                 except SystemExit:
                     raise FleetExecutionException(
-                        message='Failed to destroy units with prefix: %s'
-                                % service_prefix,
+                        message='Failed to destroy units with prefix: %s '
+                                'exclude prefix: %s'
+                                % (service_prefix, exclude_prefix),
                         command_output=stream.getvalue())
 
     def fetch_units_matching(self, service_prefix):

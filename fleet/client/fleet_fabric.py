@@ -172,7 +172,7 @@ class Provider(fleet_base.Provider):
                 try:
                     units_raw = run('fleetctl list-units -no-legend '
                                     '-fields unit,machine,active,sub -full | '
-                                    'grep %s | awk \'{{print $1}}\'' %
+                                    'grep %s' %
                                     service_prefix,
                                     stdout=stream, stderr=stream,
                                     warn_only=True)

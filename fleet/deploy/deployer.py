@@ -60,30 +60,34 @@ class Deployment:
         else:
             self.template = template
         # If version is not set, use current timestamp in ms.
-        self.version = str(version) or str(int(round(time.time() * 1000)))
+        self.version = str(version) if version else \
+            str(int(round(time.time() * 1000)))
         self.template_args = template_args.copy() if template_args else {}
         self.template_args.setdefault('name', self.name)
         self.template_args.setdefault('version', self.version)
         self.template_args.setdefault('service_type', self.service_type)
+        self.service_name_prefix = '{}-{}-{}'.format(
+            self.name, self.version, self.service_type)
+        self.template_name = '{}@.service'.format(self.service_name_prefix)
 
-    def _deploy(self, service_name_prefix):
-        template_args = self.template_args.copy()
-        template_name = '{}@.service'.format(service_name_prefix)
-        template_data = self.jinja_env.get_template(self.template)\
-            .render(template_args)
-        template_stream = StringIO()
-        template_stream.write(template_data)
-        self.fleet_provider.deploy_units(template_name, template_stream,
-                                         units=self.nodes)
-
-    def deploy(self):
+    def deploy(self, start=True):
         """
         Provisions the deployment
         :return: None
         """
-        service_name_prefix = '{}-{}-{}'.format(
-            self.name, self.version, self.service_type)
-        self._deploy(service_name_prefix)
+        template_args = self.template_args.copy()
+        template_data = self.jinja_env.get_template(self.template) \
+            .render(template_args)
+        template_stream = StringIO()
+        template_stream.write(template_data)
+        self.fleet_provider.deploy_units(self.template_name, template_stream,
+                                         start=start)
+
+    def start_units(self):
+        """
+        Starts units specified with the current deployment.
+        """
+        self.fleet_provider.start_units(self.template_args, units=self.nodes)
 
 
 def _get_service_prefix(name, version, service_type):
@@ -133,6 +137,14 @@ def undeploy(fleet_provider, name, version=None, exclude_version=None,
 
 
 def filter_units(fleet_provider, name, version=None, service_type=None):
+    """
+    Filters unit with given name and option version and service type.
+    :param fleet_provider:
+    :param name:
+    :param version:
+    :param service_type:
+    :return:
+    """
     service_prefix = _get_service_prefix(name, version, service_type)
     return fleet_provider.fetch_units_matching(service_prefix)
 

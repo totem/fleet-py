@@ -1,5 +1,9 @@
+from jinja2 import Environment
+from mock import Mock, patch
 from nose.tools import eq_
-from fleet.deploy.deployer import _get_service_prefix
+from fleet.client.fleet_base import Provider
+from fleet.deploy.deployer import _get_service_prefix, Deployment
+from tests.helper import dict_compare
 
 
 def test_get_service_name_prefix_for_all_versions():
@@ -36,3 +40,27 @@ def test_get_service_name_prefix_for_given_type():
 
     # Then: Expected value for service prefix is returned
     eq_(service_prefix, 'test-v1-app@')
+
+
+@patch('fleet.deploy.deployer.time')
+def test_init_deployment(mock_time):
+    """
+    Should initialize deployment instance
+    """
+    # Given: Mock implementation for time
+    mock_time.time.return_value = 0.12
+
+    # When: I create a deployment instance
+    deployment = Deployment(Mock(spec=Provider), Mock(spec=Environment),
+                            'mock-app')
+
+    # Then: Deployment gets initialized as expected
+    eq_(deployment.nodes, 1)
+    eq_(deployment.version, '120')
+    dict_compare(deployment.template_args, {
+        'name': 'mock-app',
+        'version': '120',
+        'service_type': 'app'
+    })
+    eq_(deployment.service_name_prefix, 'mock-app-120-app')
+    eq_(deployment.template_name, 'mock-app-120-app@.service')

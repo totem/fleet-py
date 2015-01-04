@@ -80,12 +80,14 @@ class Provider(fleet_base.Provider):
                 else:
                     return None
 
-    def deploy_units(self, template_name, service_data_stream, units=1):
+    def deploy_units(self, template_name, service_data_stream, units=1,
+                     start=True):
         """
         :param template_name: Template name must contain '@' param for
             deploying multiple instances
         :param service_data_stream: Stream cotaining template data
-        :param units: No. of units to deploy
+        :param units: No. of units to deploy. Defaults to 1. It is only needed
+            when units needs to be started after install.
         :return: None
         """
 
@@ -102,7 +104,33 @@ class Provider(fleet_base.Provider):
                     run('fleetctl submit {destination_service}'
                         .format(destination_service=destination_service),
                         stdout=stream, stderr=stream)
-                    service = template_name.replace('@', '@{1..%d}' % units)
+                    if start:
+                        service = template_name.replace('@', '@{1..%d}'
+                                                        % units)
+                        run('fleetctl start -no-block=true {service}'
+                            .format(service=service),
+                            stdout=stream, stderr=stream)
+                except SystemExit:
+                    raise FleetExecutionException(
+                        message='Failed to deploy unit: %s' % template_name,
+                        command_output=stream.getvalue())
+
+    def start_units(self, template_name, units=1):
+        """
+        Starts units with given count for a given template.
+
+        :param template_name: The template name for the unit.
+            Note: It assumes that template_name is already installed.
+            See: deploy_units for installing templates programtically.
+        :param units: No. of units to deploy
+        :return: None
+        """
+        with self._settings():
+
+            with self._fabric_wrapper() as stream:
+                try:
+                    service = template_name.replace('@', '@{1..%d}'
+                                                    % units)
                     run('fleetctl start -no-block=true {service}'
                         .format(service=service),
                         stdout=stream, stderr=stream)

@@ -87,7 +87,7 @@ class Deployment:
         """
         Starts units specified with the current deployment.
         """
-        self.fleet_provider.start_units(self.template_args, units=self.nodes)
+        self.fleet_provider.start_units(self.template_name, units=self.nodes)
 
 
 def _get_service_prefix(name, version, service_type):

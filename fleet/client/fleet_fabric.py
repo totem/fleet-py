@@ -104,9 +104,11 @@ class Provider(fleet_base.Provider):
                     run('fleetctl submit {destination_service}'
                         .format(destination_service=destination_service),
                         stdout=stream, stderr=stream)
+                    service = template_name.replace('@', '@{1..%d}'
+                                                    % units)
+                    run('fleetctl load {service}'.format(service=service),
+                        stdout=stream, stderr=stream)
                     if start:
-                        service = template_name.replace('@', '@{1..%d}'
-                                                        % units)
                         run('fleetctl start -no-block=true {service}'
                             .format(service=service),
                             stdout=stream, stderr=stream)

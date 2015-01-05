@@ -81,7 +81,7 @@ class Deployment:
         template_stream = StringIO()
         template_stream.write(template_data)
         self.fleet_provider.deploy_units(self.template_name, template_stream,
-                                         start=start)
+                                         start=start, units=self.nodes)
 
     def start_units(self):
         """

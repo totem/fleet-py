@@ -178,9 +178,9 @@ class Provider(fleet_base.Provider):
                         stderr=stream, warn_only=True)
                     # Sleep for couple of seconds to prevent timeout issue
                     # with fabric.
-                    time.sleep(2)
+                    time.sleep(5)
                     run('fleetctl list-units | grep \'%s\' | grep -v \'%s\' |'
-                        ' awk \'{print $1}\' | xargs fleetctl destroy'
+                        ' awk \'{print $1}\' | xargs fleetctl unload'
                         % (service_prefix, exclude_prefix), stdout=stream,
                         stderr=stream)
                     run('fleetctl list-unit-files | grep \'%s\' | '

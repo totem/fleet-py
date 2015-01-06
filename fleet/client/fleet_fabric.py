@@ -151,6 +151,8 @@ class Provider(fleet_base.Provider):
                         stderr=stream)
                     put(service_data_stream, destination_service)
                     if force_remove:
+                        run('fleetctl stop {}'.format(destination_service),
+                            stdout=stream, stderr=stream)
                         run('fleetctl destroy {destination_service}'
                             .format(destination_service=destination_service),
                             stdout=stream, stderr=stream)
@@ -168,6 +170,10 @@ class Provider(fleet_base.Provider):
             with self._settings():
                 try:
                     exclude_prefix = exclude_prefix or '^$'
+                    run('fleetctl list-units | grep \'%s\' | grep -v \'%s\' |'
+                        ' awk \'{print $1}\' | xargs fleetctl stop'
+                        % (service_prefix, exclude_prefix), stdout=stream,
+                        stderr=stream)
                     run('fleetctl list-units | grep \'%s\' | grep -v \'%s\' |'
                         ' awk \'{print $1}\' | xargs fleetctl destroy'
                         % (service_prefix, exclude_prefix), stdout=stream,
@@ -232,6 +238,8 @@ class Provider(fleet_base.Provider):
         with self._fabric_wrapper() as stream:
             with self._settings():
                 try:
+                    run('fleetctl stop {}'.format(service), stdout=stream,
+                        stderr=stream)
                     run('fleetctl destroy {}'.format(service), stdout=stream,
                         stderr=stream)
                 except SystemExit:

@@ -9,7 +9,7 @@ from fabric.api import run, settings, put, hide
 
 
 import logging
-
+import time
 import random
 
 DEFAULT_FAB_SETTINGS = {
@@ -71,10 +71,10 @@ class Provider(fleet_base.Provider):
                     raise FleetExecutionException(
                         message='Failed to get fleet client version',
                         command_output=stream.getvalue())
-                version_string = version_string.decode(encoding='UTF-8')\
+                version_string = version_string.decode(encoding='UTF-8') \
                     .strip()
                 if version_string.startswith('{} '
-                                             .format(FLEETCTL_VERSION_CMD)):
+                        .format(FLEETCTL_VERSION_CMD)):
                     return version_string.replace(
                         '{} '.format(FLEETCTL_VERSION_CMD), '')
                 else:
@@ -152,7 +152,7 @@ class Provider(fleet_base.Provider):
                     put(service_data_stream, destination_service)
                     if force_remove:
                         run('fleetctl stop {}'.format(destination_service),
-                            stdout=stream, stderr=stream)
+                            stdout=stream, stderr=stream, warn_only=True)
                         run('fleetctl destroy {destination_service}'
                             .format(destination_service=destination_service),
                             stdout=stream, stderr=stream)
@@ -171,9 +171,12 @@ class Provider(fleet_base.Provider):
                 try:
                     exclude_prefix = exclude_prefix or '^$'
                     run('fleetctl list-units | grep \'%s\' | grep -v \'%s\' |'
-                        ' awk \'{print $1}\' | xargs fleetctl stop'
+                        ' awk \'{print $1}\' | xargs fleetctl stop '
                         % (service_prefix, exclude_prefix), stdout=stream,
-                        stderr=stream)
+                        stderr=stream, warn_only=True)
+                    # Sleep for couple of seconds to prevent timeout issue
+                    # with fabric.
+                    time.sleep(2)
                     run('fleetctl list-units | grep \'%s\' | grep -v \'%s\' |'
                         ' awk \'{print $1}\' | xargs fleetctl destroy'
                         % (service_prefix, exclude_prefix), stdout=stream,
@@ -239,7 +242,7 @@ class Provider(fleet_base.Provider):
             with self._settings():
                 try:
                     run('fleetctl stop {}'.format(service), stdout=stream,
-                        stderr=stream)
+                        stderr=stream, warn_only=False)
                     run('fleetctl destroy {}'.format(service), stdout=stream,
                         stderr=stream)
                 except SystemExit:
@@ -272,7 +275,7 @@ class FleetExecutionException(Exception):
 
     def __repr__(self):
         return 'FleetExecutionException: %s \noutput: %s' % \
-            (self.message, self.command_output)
+               (self.message, self.command_output)
 
     def __str__(self):
         return self.__repr__()

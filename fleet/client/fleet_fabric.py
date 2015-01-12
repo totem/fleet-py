@@ -13,8 +13,8 @@ import time
 import random
 
 DEFAULT_FAB_SETTINGS = {
-    'timeout': 10,
-    'command_timeout': 60,
+    'timeout': 30,
+    'command_timeout': 180,
     'connection_attempts': 3,
     'disable_known_hosts': True,
     'abort_on_prompts': True,

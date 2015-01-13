@@ -106,7 +106,7 @@ class Provider(fleet_base.Provider):
                         stdout=stream, stderr=stream)
                     service = template_name.replace('@', '@{1..%d}'
                                                     % units)
-                    run('fleetctl load  -no-block=true {service}'
+                    run('fleetctl load -block-attempts=5 {service}'
                         .format(service=service), stdout=stream, stderr=stream)
                     if start:
                         run('fleetctl start -no-block=true {service}'

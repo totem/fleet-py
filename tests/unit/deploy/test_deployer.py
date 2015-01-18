@@ -52,7 +52,10 @@ def test_init_deployment(mock_time):
 
     # When: I create a deployment instance
     deployment = Deployment(Mock(spec=Provider), Mock(spec=Environment),
-                            'mock-app')
+                            'mock-app', template_args={
+                                'arg-1': 'value1',
+                                'arg_2': 'value2'
+                            })
 
     # Then: Deployment gets initialized as expected
     eq_(deployment.nodes, 1)
@@ -60,7 +63,9 @@ def test_init_deployment(mock_time):
     dict_compare(deployment.template_args, {
         'name': 'mock-app',
         'version': '120',
-        'service_type': 'app'
+        'service_type': 'app',
+        'arg_1': 'value1',
+        'arg_2': 'value2'
     })
     eq_(deployment.service_name_prefix, 'mock-app-120-app')
     eq_(deployment.template_name, 'mock-app-120-app@.service')

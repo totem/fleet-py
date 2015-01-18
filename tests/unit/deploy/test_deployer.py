@@ -54,8 +54,7 @@ def test_init_deployment(mock_time):
     deployment = Deployment(Mock(spec=Provider), Mock(spec=Environment),
                             'mock-app', template_args={
                                 'arg-1': 'value1',
-                                'arg_2': 'value2'
-                            })
+                                'arg_2': 'value2'})
 
     # Then: Deployment gets initialized as expected
     eq_(deployment.nodes, 1)

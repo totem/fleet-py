@@ -64,7 +64,7 @@ class Deployment:
             str(int(round(time.time() * 1000)))
         self.template_args = template_args.copy() if template_args else {}
         self.template_args = {key.replace('-', '_'): value
-                              for key, value in template_args.iteritems()}
+                              for key, value in self.template_args.iteritems()}
         self.template_args.setdefault('name', self.name)
         self.template_args.setdefault('version', self.version)
         self.template_args.setdefault('service_type', self.service_type)

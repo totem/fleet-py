@@ -128,14 +128,35 @@ def undeploy(fleet_provider, name, version=None, exclude_version=None,
     :type version: str
     :param service_type: Service type (e.g. 'app', 'logger' etc)
     :type service_type: str
-    :return: List of fleet units (dict)
-    :rtype: list
     """
 
     service_prefix = _get_service_prefix(name, version, service_type)
     exclude_prefix = _get_service_prefix(
         name, exclude_version, service_type) if exclude_version else None
     fleet_provider.destroy_units_matching(service_prefix, exclude_prefix)
+
+
+def stop(fleet_provider, name, version=None, exclude_version=None,
+         service_type=None):
+    """
+    Stops the application in the given fleet cluster.
+
+    :param fleet_provider: Fleet provider for connecting to fleet cluster.
+    :type fleet_provider: fleet.client.fleet_base.Provider
+    :param name: Name of the application
+    :type name: str
+    :param version: Version of the application. If none, all versions are
+        undeployed.
+    :type version: str
+    :param service_type: Service type (e.g. 'app', 'logger' etc)
+    :type service_type: str
+    :return: None
+    """
+
+    service_prefix = _get_service_prefix(name, version, service_type)
+    exclude_prefix = _get_service_prefix(
+        name, exclude_version, service_type) if exclude_version else None
+    fleet_provider.stop_units_matching(service_prefix, exclude_prefix)
 
 
 def filter_units(fleet_provider, name, version=None, service_type=None):
@@ -145,7 +166,8 @@ def filter_units(fleet_provider, name, version=None, service_type=None):
     :param name:
     :param version:
     :param service_type:
-    :return:
+    :return: List of fleet units (dict)
+    :rtype: list
     """
     service_prefix = _get_service_prefix(name, version, service_type)
     return fleet_provider.fetch_units_matching(service_prefix)

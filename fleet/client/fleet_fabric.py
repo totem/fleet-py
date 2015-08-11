@@ -270,6 +270,26 @@ class Provider(fleet_base.Provider):
                                 % service_name,
                         command_output=stream.getvalue())
 
+    def stop_units_matching(self, service_prefix, exclude_prefix=None):
+        with self._fabric_wrapper() as stream:
+            with self._settings():
+                try:
+                    exclude_prefix = exclude_prefix or '^$'
+                    run('fleetctl list-units | grep \'%s\' | grep -v \'%s\' |'
+                        ' awk \'{print $1}\' | '
+                        'xargs fleetctl stop -no-block=true '
+                        % (service_prefix, exclude_prefix), stdout=stream,
+                        stderr=stream, warn_only=True)
+                    # Sleep for couple of seconds to prevent timeout issue
+                    # with fabric.
+                    time.sleep(2)
+                except SystemExit:
+                    raise FleetExecutionException(
+                        message='Failed to stop units with prefix: %s '
+                                'exclude prefix: %s'
+                                % (service_prefix, exclude_prefix),
+                        command_output=stream.getvalue())
+
 
 class FleetExecutionException(Exception):
     def __init__(self, message='One or more commands failed to get '

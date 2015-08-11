@@ -78,12 +78,15 @@ class Provider:
         """
         self.not_supported()
 
-    def fetch_units_matching(self, service_prefix):
+    def fetch_units_matching(self, service_prefix, exclude_prefix=None):
         """
         Fetch units matching prefix.
 
         :param service_prefix:
         :type service_prefix: str
+        :keyword exclude_prefix: Units with specified prefix should be excluded
+            from fetch list
+        :type exclude_prefix: str
         :return: list of units where each unit is represented as dict
             comprising of
                 - unit : Name of fleet unit,

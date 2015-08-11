@@ -199,43 +199,29 @@ class Provider(fleet_base.Provider):
                                 % (service_prefix, exclude_prefix),
                         command_output=stream.getvalue())
 
-    def fetch_units_matching(self, service_prefix):
-        """
-        Fetch units matching prefix.
-
-        :param service_prefix:
-        :type service_prefix: str
-        :return: list of units where each unit is represented as dict
-            comprising of
-                - unit : Name of fleet unit,
-                - machine : Machine for the unit
-                - active : Activation status ('activating', 'active')
-                - sub : Current state of the unit
-        """
+    def fetch_units_matching(self, service_prefix, exclude_prefix=None):
         with self._fabric_wrapper() as stream:
             with self._settings():
                 try:
+                    exclude_prefix = exclude_prefix or '^$'
                     units_raw = run('fleetctl list-units -no-legend '
                                     '-fields unit,machine,active,sub -full | '
-                                    'grep %s' %
-                                    service_prefix,
+                                    'grep \'{}\' | grep -v \'{}\''.format(
+                                        service_prefix, exclude_prefix),
                                     stdout=stream, stderr=stream,
                                     warn_only=True)
-
-                    units = []
 
                     for line in units_raw.splitlines():
                         cols = line.split()
                         if not cols or len(cols) < 4:
                             continue
-                        units.append({
-                            'unit': cols[0],
-                            'machine': cols[1],
-                            'active': cols[2],
-                            'sub': cols[3]
-                        })
-
-                    return units
+                        else:
+                            yield {
+                                'unit': cols[0],
+                                'machine': cols[1],
+                                'active': cols[2],
+                                'sub': cols[3]
+                            }
 
                 except SystemExit:
                     raise FleetExecutionException(

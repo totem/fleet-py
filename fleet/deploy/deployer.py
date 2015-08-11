@@ -159,7 +159,8 @@ def stop(fleet_provider, name, version=None, exclude_version=None,
     fleet_provider.stop_units_matching(service_prefix, exclude_prefix)
 
 
-def filter_units(fleet_provider, name, version=None, service_type=None):
+def filter_units(fleet_provider, name, version=None, exclude_version=None,
+                 service_type=None):
     """
     Filters unit with given name and option version and service type.
     :param fleet_provider:
@@ -170,7 +171,10 @@ def filter_units(fleet_provider, name, version=None, service_type=None):
     :rtype: list
     """
     service_prefix = _get_service_prefix(name, version, service_type)
-    return fleet_provider.fetch_units_matching(service_prefix)
+    exclude_prefix = _get_service_prefix(
+        name, exclude_version, service_type) if exclude_version else None
+    return list(fleet_provider.fetch_units_matching(
+        service_prefix, exclude_prefix=exclude_prefix))
 
 
 def status(fleet_provider, name, version, node_num, service_type='app'):

@@ -25,7 +25,7 @@ def test_fetch_units_matching_with_no_match(mock_run):
     mock_run.return_value = ''
 
     # When: I try to fetch units with no matching unit
-    units = provider.fetch_units_matching('non-existing-unit-')
+    units = list(provider.fetch_units_matching('non-existing-unit-'))
 
     # Then: Empty list is returned
     eq_(units, [])
@@ -46,7 +46,7 @@ invalidrow
     '''  # noqa
 
     # When: I try to fetch units with no matching unit
-    units = provider.fetch_units_matching('cluster-deployer-develop-')
+    units = list(provider.fetch_units_matching('cluster-deployer-develop-'))
 
     # Then: Empty list is returned
     eq_(len(units), 2, 'Expecting 2 units to be returned. Found: %d' %

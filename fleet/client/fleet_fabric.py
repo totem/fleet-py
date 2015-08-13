@@ -261,7 +261,7 @@ class Provider(fleet_base.Provider):
         exclude_prefix = exclude_prefix or '^$'
         stop_cmd = 'fleetctl list-units | grep \'%s\' | grep -v \'%s\' | ' \
             'awk \'{print $1}\' | ' \
-            'xargs fleetctl stop -no-block=true '.format(
+            'xargs fleetctl stop -no-block=true ' % (
                 service_prefix, exclude_prefix)
         with self._fabric_wrapper() as stream:
             with self._settings():

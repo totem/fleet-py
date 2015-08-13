@@ -200,15 +200,16 @@ class Provider(fleet_base.Provider):
                         command_output=stream.getvalue())
 
     def fetch_units_matching(self, service_prefix, exclude_prefix=None):
+        exclude_prefix = exclude_prefix or '^$'
+        list_cmd = 'fleetctl list-units -no-legend ' \
+            '-fields unit,machine,active,sub -full | ' \
+            'grep \'{}\' | grep -v \'{}\''.format(
+                service_prefix, exclude_prefix)
         with self._fabric_wrapper() as stream:
             with self._settings():
                 try:
-                    exclude_prefix = exclude_prefix or '^$'
-                    units_raw = run('fleetctl list-units -no-legend '
-                                    '-fields unit,machine,active,sub -full | '
-                                    'grep \'{}\' | grep -v \'{}\''.format(
-                                        service_prefix, exclude_prefix),
-                                    stdout=stream, stderr=stream,
+                    logger.info('fetch_units_matching: {}'.format(list_cmd))
+                    units_raw = run(list_cmd, stdout=stream, stderr=stream,
                                     warn_only=True)
 
                     for line in units_raw.splitlines():
@@ -257,15 +258,17 @@ class Provider(fleet_base.Provider):
                         command_output=stream.getvalue())
 
     def stop_units_matching(self, service_prefix, exclude_prefix=None):
+        exclude_prefix = exclude_prefix or '^$'
+        stop_cmd = 'fleetctl list-units | grep \'%s\' | grep -v \'%s\' | ' \
+            'awk \'{print $1}\' | ' \
+            'xargs fleetctl stop -no-block=true '.format(
+                service_prefix, exclude_prefix)
         with self._fabric_wrapper() as stream:
             with self._settings():
                 try:
-                    exclude_prefix = exclude_prefix or '^$'
-                    run('fleetctl list-units | grep \'%s\' | grep -v \'%s\' |'
-                        ' awk \'{print $1}\' | '
-                        'xargs fleetctl stop -no-block=true '
-                        % (service_prefix, exclude_prefix), stdout=stream,
-                        stderr=stream, warn_only=True)
+                    logger.info('stop_units_matching: {}'.format(stop_cmd))
+                    run(stop_cmd, stdout=stream,
+                        stderr=stream, warn_only=False)
                     # Sleep for couple of seconds to prevent timeout issue
                     # with fabric.
                     time.sleep(2)

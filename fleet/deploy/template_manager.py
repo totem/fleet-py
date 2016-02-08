@@ -1,7 +1,6 @@
-__author__ = 'sukrit'
-
 from pkg_resources import resource_string
 
+__author__ = 'sukrit'
 
 BUNDLED_TEMPLATE_PREFIX = "bundled://"
 RAW_TEMPLATE_PREFIX = "raw://"

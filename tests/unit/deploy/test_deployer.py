@@ -68,3 +68,22 @@ def test_init_deployment(mock_time):
     })
     eq_(deployment.service_name_prefix, 'mock-app-120-app')
     eq_(deployment.template_name, 'mock-app-120-app@.service')
+
+
+@patch('fleet.deploy.deployer.time')
+def test_init_timer_deployment(mock_time):
+    """
+    Should initialize deployment instance
+    """
+    # Given: Mock implementation for time
+    mock_time.time.return_value = 0.12
+
+    # When: I create a deployment instance
+    deployment = Deployment(Mock(spec=Provider), Mock(spec=Environment),
+                            'mock-app', template_args={
+            'arg-1': 'value1',
+            'arg_2': 'value2'}, timer=True)
+
+    # Then: Deployment gets initialized as expected
+    eq_(deployment.service_name_prefix, 'mock-app-120-app')
+    eq_(deployment.template_name, 'mock-app-120-app@.timer')

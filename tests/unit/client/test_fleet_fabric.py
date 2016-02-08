@@ -2,11 +2,9 @@ from mock import patch
 
 from fleet.client.fleet_fabric import Provider
 from tests.helper import dict_compare
-
+from nose.tools import eq_
 
 __author__ = 'sukrit'
-
-from nose.tools import eq_
 
 
 def _get_fleet_provider():

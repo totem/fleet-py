@@ -1,16 +1,14 @@
 from io import BytesIO
 
 from fleet.client import fleet_base
-
-
-__author__ = 'sukrit'
-
 from fabric.api import run, settings, put, hide
-
 
 import logging
 import time
 import random
+
+__author__ = 'sukrit'
+
 
 DEFAULT_FAB_SETTINGS = {
     'timeout': 30,

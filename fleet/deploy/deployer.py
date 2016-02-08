@@ -1,11 +1,13 @@
-__author__ = 'sukrit'
-
 from cStringIO import StringIO
 import time
 
 from jinja2 import Environment, FileSystemLoader, ChoiceLoader
-
 from fleet.deploy.github_loader import GithubTemplateLoader
+
+__author__ = 'sukrit'
+
+SERVICE_SUFFIX = '.service'
+TIMER_SUFFIX = '.timer'
 
 
 def default_jinja_environment(local_search_path=None, owner='totem',
@@ -19,15 +21,25 @@ def default_jinja_environment(local_search_path=None, owner='totem',
 
     :param local_search_path: Local path for searching the templates
     :type local_search_path: list or str
+    :keyword owner: Repository owner
+    :type owner: str
+    :keyword repo: Git repository
+    :type repo: str
+    :keyword path: Path to templates
+    :type path: str
+    :keyword ref: Branch/Tag
+    :type ref: str
+    :keyword token: Github token
+    :type token: str
     :return: Jinja Environment
     :rtype: Environment
     """
     return Environment(
-        loader=ChoiceLoader([
-            FileSystemLoader(local_search_path or ['./templates']),
-            GithubTemplateLoader(owner=owner, repo=repo, path=path,
-                                 ref=ref, token=token)
-        ]))
+            loader=ChoiceLoader([
+                FileSystemLoader(local_search_path or ['./templates']),
+                GithubTemplateLoader(owner=owner, repo=repo, path=path,
+                                     ref=ref, token=token)
+            ]))
 
 
 class Deployment:
@@ -44,21 +56,27 @@ class Deployment:
         for naming fleet services.
     :param template_args: Arguments to be passed to the jinja template for
         creating fleet unit files.
+    :keyword timer: Is this deployment a timer unit ?
+    :type timer: bool
     """
     def __init__(self, fleet_provider, jinja_env, name,
                  template='default-app.service',
                  version=None, nodes=1, service_type='app',
-                 template_args=None):
+                 template_args=None, timer=False):
         self.fleet_provider = fleet_provider
         self.service_type = service_type
         self.nodes = nodes
         self.jinja_env = jinja_env
         self.name = name
 
-        if not template.endswith('.service'):
-            self.template = template + '.service'
+        self.service_suffix = SERVICE_SUFFIX if not timer else TIMER_SUFFIX
+        if not template.endswith(SERVICE_SUFFIX):
+            self.template = template + self.service_suffix
         else:
             self.template = template
+
+        if timer:
+            self.template = self.template.replace(SERVICE_SUFFIX, TIMER_SUFFIX)
         # If version is not set, use current timestamp in ms.
         self.version = str(version) if version else \
             str(int(round(time.time() * 1000)))
@@ -69,8 +87,9 @@ class Deployment:
         self.template_args.setdefault('version', self.version)
         self.template_args.setdefault('service_type', self.service_type)
         self.service_name_prefix = '{}-{}-{}'.format(
-            self.name, self.version, self.service_type)
-        self.template_name = '{}@.service'.format(self.service_name_prefix)
+                self.name, self.version, self.service_type)
+        self.template_name = '{}@{}'.format(self.service_name_prefix,
+                                            self.service_suffix)
 
     def deploy(self, start=True):
         """
@@ -132,7 +151,7 @@ def undeploy(fleet_provider, name, version=None, exclude_version=None,
 
     service_prefix = _get_service_prefix(name, version, service_type)
     exclude_prefix = _get_service_prefix(
-        name, exclude_version, service_type) if exclude_version else None
+            name, exclude_version, service_type) if exclude_version else None
     fleet_provider.destroy_units_matching(service_prefix, exclude_prefix)
 
 
@@ -155,7 +174,7 @@ def stop(fleet_provider, name, version=None, exclude_version=None,
 
     service_prefix = _get_service_prefix(name, version, service_type)
     exclude_prefix = _get_service_prefix(
-        name, exclude_version, service_type) if exclude_version else None
+            name, exclude_version, service_type) if exclude_version else None
     fleet_provider.stop_units_matching(service_prefix, exclude_prefix)
 
 
@@ -172,12 +191,13 @@ def filter_units(fleet_provider, name, version=None, exclude_version=None,
     """
     service_prefix = _get_service_prefix(name, version, service_type)
     exclude_prefix = _get_service_prefix(
-        name, exclude_version, service_type) if exclude_version else None
+            name, exclude_version, service_type) if exclude_version else None
     return list(fleet_provider.fetch_units_matching(
-        service_prefix, exclude_prefix=exclude_prefix))
+            service_prefix, exclude_prefix=exclude_prefix))
 
 
-def status(fleet_provider, name, version, node_num, service_type='app'):
+def status(fleet_provider, name, version, node_num, service_type='app',
+           timer=False):
     """
     Gets the status for a node in cluster.
 
@@ -188,6 +208,7 @@ def status(fleet_provider, name, version, node_num, service_type='app'):
     :param service_type:
     :return:
     """
-    service = "{}-{}-{}@{}.service".format(
-        name, version, service_type, node_num)
+    service_suffix = SERVICE_SUFFIX if not timer else TIMER_SUFFIX
+    service = "{}-{}-{}@{}{}".format(
+            name, version, service_type, node_num, service_suffix)
     return fleet_provider.status(service)

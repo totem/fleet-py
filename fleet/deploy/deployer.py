@@ -90,6 +90,7 @@ class Deployment:
                 self.name, self.version, self.service_type)
         self.template_name = '{}@{}'.format(self.service_name_prefix,
                                             self.service_suffix)
+        self.timer = timer
 
     def deploy(self, start=True):
         """

@@ -70,6 +70,20 @@ def test_init_deployment(mock_time):
     eq_(deployment.template_name, 'mock-app-120-app@.service')
 
 
+def test_init_deployment_with_timer():
+    """
+    Should initialize deployment instance
+    """
+
+    # When: I create a deployment instance with timer
+    deployment = Deployment(Mock(spec=Provider), Mock(spec=Environment),
+                            'mock-app', timer=True,
+                            service_type='timer')
+
+    # Then: Service Type is initialized to app
+    eq_(deployment.service_type, 'app')
+
+
 @patch('fleet.deploy.deployer.time')
 def test_init_timer_deployment(mock_time):
     """

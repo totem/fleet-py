@@ -64,7 +64,7 @@ class Deployment:
                  version=None, nodes=1, service_type='app',
                  template_args=None, timer=False):
         self.fleet_provider = fleet_provider
-        self.service_type = service_type
+        self.service_type = service_type if not timer else 'app'
         self.nodes = nodes
         self.jinja_env = jinja_env
         self.name = name
